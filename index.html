@@ -2,10 +2,21 @@
 <html>
 <head>
     <title>WebAR Küp Deneyimi</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script>
+        window.addEventListener('camera-error', function(ev) {
+            const error = document.querySelector('.error-message');
+            error.style.display = 'block';
+            error.textContent = 'Kamera erişimi hatası: Lütfen kamera izinlerini kontrol edin ve sayfayı yenileyin.';
+        });
+
+        window.addEventListener('camera-init', function(ev) {
+            const error = document.querySelector('.error-message');
+            error.style.display = 'none';
+        });
+
         AFRAME.registerComponent('change-color-on-click', {
             init: function () {
                 let el = this.el;
@@ -18,21 +29,6 @@
                 });
             }
         });
-
-        window.onload = function() {
-            document.querySelector('.arjs-loader').style.display = 'block';
-            
-            // Kamera erişimi kontrolü
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    document.querySelector('.arjs-loader').style.display = 'none';
-                    stream.getTracks().forEach(track => track.stop());
-                })
-                .catch(function(err) {
-                    document.querySelector('.arjs-loader-message').innerText = 
-                        'Kamera erişimi reddedildi. Lütfen kamera izinlerini kontrol edin.';
-                });
-        };
     </script>
     <style>
         .arjs-loader {
@@ -48,6 +44,21 @@
             align-items: center;
         }
 
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 9999;
+            display: none;
+            max-width: 80%;
+        }
+
         .arjs-loader div {
             text-align: center;
             font-size: 1.25em;
@@ -58,15 +69,17 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
     <div class="arjs-loader">
-        <div class="arjs-loader-message">Kamera izni verip bekleyin...</div>
+        <div>Kamera izni verip bekleyin...</div>
     </div>
+    
+    <div class="error-message"></div>
 
     <a-scene
         vr-mode-ui="enabled: false"
-        loading-screen="enabled: false"
-        arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;'
-        embedded>
-        <a-marker preset="hiro" smooth="true" smoothCount="5">
+        renderer="logarithmicDepthBuffer: true;"
+        embedded
+        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
+        <a-marker type="pattern" preset="hiro">
             <a-box
                 position="0 0.5 0"
                 material="color: red"
