@@ -196,7 +196,11 @@
     </div>
     
     <div class="controls">
+        <button class="control-btn" onclick="moveModel(-1)">Uzaklaştır</button>
+        <button class="control-btn" onclick="moveModel(1)">Yakınlaştır</button>
         <div class="size-display">Boyut: <span id="size-value">2</span></div>
+        <button class="control-btn" onclick="changeSize(-0.5)">Küçült</button>
+        <button class="control-btn" onclick="changeSize(0.5)">Büyüt</button>
     </div>
 
     <a-scene
@@ -213,7 +217,7 @@
         
         <a-entity
             id="fred"
-            position="0 0 -3"
+            position="0 0 -5"
             scale="2 2 2"
             gltf-model="#fred-model"
             model-handler
@@ -223,6 +227,23 @@
     </a-scene>
 
     <script>
+        let currentSize = 2;
+        
+        function changeSize(delta) {
+            currentSize = Math.max(0.5, Math.min(5, currentSize + delta));
+            document.getElementById('size-value').textContent = currentSize.toFixed(2);
+            document.getElementById('fred').setAttribute('scale', `${currentSize} ${currentSize} ${currentSize}`);
+        }
+
+        function moveModel(delta) {
+            const model = document.getElementById('fred');
+            const position = model.getAttribute('position');
+            position.z += delta;
+            // Z pozisyonunu -2 ile -10 arasında sınırla
+            position.z = Math.max(-10, Math.min(-2, position.z));
+            model.setAttribute('position', position);
+        }
+
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.querySelector('.loading').style.display = 'none';
