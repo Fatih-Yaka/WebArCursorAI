@@ -67,14 +67,7 @@
         AFRAME.registerComponent('model-handler', {
             init: function () {
                 this.el.addEventListener('model-loaded', () => {
-                    // Model yüklendiğinde animasyonu başlat
-                    this.el.setAttribute('animation', {
-                        property: 'rotation',
-                        to: '0 360 0',
-                        loop: true,
-                        dur: 10000,
-                        easing: 'linear'
-                    });
+                    console.log('Model yüklendi');
                 });
             }
         });
