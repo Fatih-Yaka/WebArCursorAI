@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebAR Küp Deneyimi</title>
+    <title>WebAR Fred Deneyimi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.3.0/dist/aframe-master.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
     <script>
-        AFRAME.registerComponent('color-toggle', {
+        AFRAME.registerComponent('model-handler', {
             init: function () {
-                let colors = ['red', 'blue', 'green', 'yellow', 'purple'];
-                let currentIndex = 0;
-                
-                this.el.addEventListener('click', () => {
-                    currentIndex = (currentIndex + 1) % colors.length;
-                    this.el.setAttribute('material', 'color', colors[currentIndex]);
+                this.el.addEventListener('model-loaded', () => {
+                    // Model yüklendiğinde animasyonu başlat
+                    this.el.setAttribute('animation', {
+                        property: 'rotation',
+                        to: '0 360 0',
+                        loop: true,
+                        dur: 10000,
+                        easing: 'linear'
+                    });
                 });
             }
         });
@@ -32,6 +35,35 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .control-btn {
+            background: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+        .size-display {
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
         }
         .a-canvas {
             width: 100% !important;
@@ -93,25 +125,42 @@
     <div class="loading">Kamera başlatılıyor...</div>
     <div class="rotate-prompt">En iyi deneyim için telefonu yatay tutun</div>
     
+    <div class="controls">
+        <button class="control-btn" onclick="changeSize(-0.5)">Küçült</button>
+        <div class="size-display">Boyut: <span id="size-value">2</span></div>
+        <button class="control-btn" onclick="changeSize(0.5)">Büyüt</button>
+    </div>
+
     <a-scene
         embedded
         renderer="antialias: true; alpha: true; precision: mediump;"
         vr-mode-ui="enabled: false">
         
-        <a-entity camera look-controls="enabled: true" position="0 1.6 0">
-            <a-box
-                position="0 0 -2"
-                scale="0.5 0.5 0.5"
-                material="color: red"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"
-                color-toggle
-                cursor-listener>
-            </a-box>
+        <a-assets>
+            <a-asset-item id="fred-model" src="assets/fred.glb"></a-asset-item>
+        </a-assets>
+
+        <a-entity camera look-controls="enabled: true" position="0 1.6 0"></a-entity>
+        
+        <a-entity
+            id="fred"
+            position="0 0 -3"
+            scale="2 2 2"
+            gltf-model="#fred-model"
+            model-handler>
         </a-entity>
         
     </a-scene>
 
     <script>
+        let currentSize = 2;
+        
+        function changeSize(delta) {
+            currentSize = Math.max(0.5, Math.min(5, currentSize + delta));
+            document.getElementById('size-value').textContent = currentSize;
+            document.getElementById('fred').setAttribute('scale', `${currentSize} ${currentSize} ${currentSize}`);
+        }
+
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.querySelector('.loading').style.display = 'none';
