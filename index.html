@@ -28,6 +28,25 @@
             left: 0 !important;
             z-index: 1 !important;
         }
+        .a-enter-vr {
+            display: none;
+        }
+        #arjs-video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 0 !important;
+        }
+        .a-scene-fullscreen {
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+            top: 0 !important;
+            left: 0 !important;
+        }
         .loading {
             position: fixed;
             top: 0;
@@ -65,8 +84,7 @@
         embedded
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1920; displayHeight: 1080;"
         vr-mode-ui="enabled: false"
-        renderer="antialias: true; alpha: true; precision: mediump;"
-        inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
+        renderer="antialias: true; alpha: true; precision: mediump;">
         
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         
@@ -89,7 +107,7 @@
             }, 3000);
 
             // Video elementini tam ekran yap
-            const video = document.querySelector('video');
+            const video = document.querySelector('#arjs-video');
             if (video) {
                 video.style.width = '100vw';
                 video.style.height = '100vh';
