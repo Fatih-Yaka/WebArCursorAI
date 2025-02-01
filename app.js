@@ -6,9 +6,7 @@ class ARSceneManager {
         this.instructions = document.querySelector('.instructions');
         this.marker = document.querySelector('a-marker');
         this.model = document.querySelector('#building');
-        this.modelVisible = false;
-        this.lastPosition = null;
-        this.lastRotation = null;
+        this.persistentParent = document.querySelector('#persistent-parent');
         
         this.initializeEventListeners();
     }
@@ -26,29 +24,16 @@ class ARSceneManager {
         // Marker olayları
         this.marker.addEventListener('markerFound', () => {
             this.instructions.style.opacity = '0.5';
-            if (!this.modelVisible) {
-                this.modelVisible = true;
-                this.lastPosition = this.model.getAttribute('position');
-                this.lastRotation = this.model.getAttribute('rotation');
-            }
-        });
-
-        this.marker.addEventListener('markerLost', () => {
-            if (this.modelVisible && this.lastPosition && this.lastRotation) {
-                // Model konumunu koru
-                this.model.setAttribute('position', this.lastPosition);
-                this.model.setAttribute('rotation', this.lastRotation);
-                this.model.setAttribute('visible', true);
-            }
+            this.persistentParent.setAttribute('visible', true);
         });
 
         // Kamera hareketi
         const camera = document.querySelector('[camera]');
         camera.addEventListener('componentchanged', (evt) => {
-            if (this.modelVisible && this.lastPosition) {
-                // Model konumunu güncelle
-                const worldPos = this.model.object3D.getWorldPosition();
-                this.lastPosition = worldPos;
+            if (this.persistentParent.getAttribute('visible')) {
+                // Model görünür durumdaysa pozisyonunu güncelle
+                const worldPos = this.model.object3D.getWorldPosition(new THREE.Vector3());
+                this.persistentParent.setAttribute('position', worldPos);
             }
         });
     }
@@ -70,7 +55,7 @@ class ModelManager {
         this.model = model;
         this.scale = 0.5;
         this.rotation = { x: 0, y: 0, z: 0 };
-        this.position = { x: 1, y: 0, z: 0 }; // Model işaretçinin yanında
+        this.position = { x: 1, y: 0, z: 0 };
         this.initializeModel();
     }
 
@@ -79,9 +64,10 @@ class ModelManager {
         this.updateScale(this.scale);
         this.updateRotation(this.rotation.x, this.rotation.y, this.rotation.z);
         
-        // Model yüklendiğinde
         this.model.addEventListener('model-loaded', () => {
-            console.log('Model yüklendi ve konumu sabitlendi');
+            console.log('Model yüklendi');
+            // Model yüklendiğinde görünürlüğü açık olsun
+            this.model.setAttribute('visible', true);
         });
     }
 
