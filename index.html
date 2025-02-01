@@ -5,56 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.3.0/dist/aframe-master.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        .instructions {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            z-index: 9999;
-            font-size: 14px;
-            width: 80%;
-        }
-        .loading-progress {
-            font-size: 14px;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="loading">
-        Kamera başlatılıyor...<br><br>
-        Lütfen kamerayı tabela üzerindeki işaretçiye doğrultun
-        <div class="loading-progress"></div>
+    <div class="arjs-loader">
+        <div class="loading-text">
+            Kamera başlatılıyor...<br><br>
+            Lütfen kamera izni verin
+        </div>
     </div>
     
     <div class="instructions">
@@ -65,14 +23,12 @@
 
     <a-scene
         embedded
-        arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960;'
-        renderer="antialias: true; alpha: true; precision: mediump;"
-        vr-mode-ui="enabled: false">
+        arjs='sourceType: webcam; debugUIEnabled: false; trackingMethod: best; patternRatio: 0.75;'
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true;">
         
         <a-assets>
-            <a-asset-item id="building-model" src="assets/BuildingModel.glb"
-                         response-type="arraybuffer"
-                         crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="building-model" src="assets/BuildingModel.glb"></a-asset-item>
         </a-assets>
 
         <a-marker 
@@ -81,14 +37,17 @@
             smooth="true"
             smoothCount="5"
             smoothTolerance="0.01"
-            smoothThreshold="2">
+            smoothThreshold="2"
+            raycaster="objects: .clickable"
+            emitevents="true">
             
             <a-entity
                 id="building"
                 position="0 0 0"
                 scale="0.5 0.5 0.5"
                 rotation="0 0 0"
-                gltf-model="#building-model">
+                gltf-model="#building-model"
+                class="clickable">
             </a-entity>
             
         </a-marker>
@@ -97,46 +56,6 @@
         
     </a-scene>
 
-    <script>
-        // Model yükleme kontrolü
-        const model = document.querySelector('#building-model');
-        const loadingProgress = document.querySelector('.loading-progress');
-        
-        model.addEventListener('model-loading', () => {
-            loadingProgress.textContent = 'Model yükleniyor...';
-        });
-
-        model.addEventListener('model-loaded', () => {
-            loadingProgress.textContent = 'Model yüklendi!';
-            setTimeout(() => {
-                document.querySelector('.loading').style.display = 'none';
-            }, 1000);
-        });
-
-        model.addEventListener('model-error', () => {
-            loadingProgress.textContent = 'Model yüklenirken hata oluştu!';
-        });
-
-        // Marker bulunduğunda
-        const marker = document.querySelector('a-marker');
-        marker.addEventListener('markerFound', () => {
-            console.log('İşaretçi bulundu!');
-            document.querySelector('.instructions').style.opacity = '0.5';
-        });
-
-        // Marker kaybolduğunda
-        marker.addEventListener('markerLost', () => {
-            console.log('İşaretçi kayboldu!');
-            document.querySelector('.instructions').style.opacity = '1';
-        });
-
-        window.addEventListener('camera-error', () => {
-            document.querySelector('.loading').innerHTML = 
-                'Kamera erişimi hatası! Lütfen:<br>' +
-                '1. Chrome tarayıcısını kullanın<br>' +
-                '2. Kamera izinlerini kontrol edin<br>' +
-                '3. Sayfayı yenileyin';
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html> 
