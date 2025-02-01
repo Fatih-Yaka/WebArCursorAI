@@ -3,8 +3,9 @@
 <head>
     <title>İnşaat AR Projesi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.3.0/dist/aframe-master.min.js"></script>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex-location-only.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,8 +18,8 @@
     
     <div class="instructions">
         ▪ Kamerayı tabeladaki işaretçiye doğrultun<br>
-        ▪ Binanın bitmiş halini görmek için sabit tutun<br>
-        ▪ Daha iyi görüntü için tabelaya yaklaşıp uzaklaşabilirsiniz
+        ▪ Model konumu sabitlenecektir<br>
+        ▪ İşaretçi kaybolsa bile model görünmeye devam edecektir
     </div>
 
     <a-scene
@@ -39,20 +40,22 @@
             smoothTolerance="0.01"
             smoothThreshold="2"
             raycaster="objects: .clickable"
-            emitevents="true">
+            emitevents="true"
+            registerevents>
             
             <a-entity
                 id="building"
-                position="0 0 0"
+                position="1 0 0"
                 scale="0.5 0.5 0.5"
                 rotation="0 0 0"
                 gltf-model="#building-model"
-                class="clickable">
+                class="clickable"
+                persistent>
             </a-entity>
             
         </a-marker>
 
-        <a-entity camera></a-entity>
+        <a-entity camera look-controls="enabled: true" position="0 1.6 0"></a-entity>
         
     </a-scene>
 

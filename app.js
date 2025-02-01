@@ -6,6 +6,9 @@ class ARSceneManager {
         this.instructions = document.querySelector('.instructions');
         this.marker = document.querySelector('a-marker');
         this.model = document.querySelector('#building');
+        this.modelVisible = false;
+        this.lastPosition = null;
+        this.lastRotation = null;
         
         this.initializeEventListeners();
     }
@@ -23,10 +26,30 @@ class ARSceneManager {
         // Marker olayları
         this.marker.addEventListener('markerFound', () => {
             this.instructions.style.opacity = '0.5';
+            if (!this.modelVisible) {
+                this.modelVisible = true;
+                this.lastPosition = this.model.getAttribute('position');
+                this.lastRotation = this.model.getAttribute('rotation');
+            }
         });
 
         this.marker.addEventListener('markerLost', () => {
-            this.instructions.style.opacity = '1';
+            if (this.modelVisible && this.lastPosition && this.lastRotation) {
+                // Model konumunu koru
+                this.model.setAttribute('position', this.lastPosition);
+                this.model.setAttribute('rotation', this.lastRotation);
+                this.model.setAttribute('visible', true);
+            }
+        });
+
+        // Kamera hareketi
+        const camera = document.querySelector('[camera]');
+        camera.addEventListener('componentchanged', (evt) => {
+            if (this.modelVisible && this.lastPosition) {
+                // Model konumunu güncelle
+                const worldPos = this.model.object3D.getWorldPosition();
+                this.lastPosition = worldPos;
+            }
         });
     }
 
@@ -47,7 +70,19 @@ class ModelManager {
         this.model = model;
         this.scale = 0.5;
         this.rotation = { x: 0, y: 0, z: 0 };
-        this.position = { x: 0, y: 0, z: 0 };
+        this.position = { x: 1, y: 0, z: 0 }; // Model işaretçinin yanında
+        this.initializeModel();
+    }
+
+    initializeModel() {
+        this.updatePosition(this.position.x, this.position.y, this.position.z);
+        this.updateScale(this.scale);
+        this.updateRotation(this.rotation.x, this.rotation.y, this.rotation.z);
+        
+        // Model yüklendiğinde
+        this.model.addEventListener('model-loaded', () => {
+            console.log('Model yüklendi ve konumu sabitlendi');
+        });
     }
 
     updateScale(scale) {
