@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -48,6 +49,21 @@
             text-align: center;
             display: block;
         }
+        /* İşaretçi bilgisi */
+        #marker-info {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: Arial, sans-serif;
+            z-index: 999;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -59,7 +75,11 @@
     </div>
 
     <div id="marker-message">
-        Modeli görmek için HIRO işaretçisini kameraya gösterin
+        Modelleri görmek için işaretçileri kameraya gösterin
+    </div>
+
+    <div id="marker-info" id="marker-info">
+        Aktif model: <span id="active-model">Yok</span>
     </div>
 
     <a-scene 
@@ -69,31 +89,152 @@
         
         <!-- Asset Management System -->
         <a-assets>
-            <a-asset-item id="model" src="assets/bina.glb" crossorigin="anonymous"></a-asset-item>
-            <img id="hiro-marker" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
+            <!-- Modeller -->
+            <a-asset-item id="bina-model" src="assets/bina.glb" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="fred-model" src="assets/fred.glb" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="building-model" src="assets/buildingmodel2.glb" crossorigin="anonymous"></a-asset-item>
+            
+            <!-- İşaretçi Görselleri -->
+            <img id="hiro-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
+            <img id="kanji-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/KANJI.jpg" alt="KANJI Marker">
+            <img id="pattern-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/pattern-marker.png" alt="Pattern Marker">
         </a-assets>
         
-        <!-- Marker ve Model -->
-        <a-marker preset="hiro" id="hiro-marker" smooth="true" smoothCount="5">
-            <a-entity
-                id="model-entity"
-                position="0 0 0"
-                rotation="0 0 0"
-                scale="1 1 1"
-                gltf-model="#model"
-                touch-controls>
-            </a-entity>
-        </a-marker>
+        <!-- Dünya koordinat sistemi -->
+        <a-entity id="world">
+            <!-- Marker ve Modeller -->
+            <!-- HIRO işaretçisi - Bina modeli -->
+            <a-marker preset="hiro" id="hiro-marker" smooth="true" smoothCount="5" registerevents>
+                <a-entity
+                    id="bina-entity"
+                    position="0 0 0"
+                    rotation="0 0 0"
+                    scale="1 1 1"
+                    gltf-model="#bina-model"
+                    touch-controls
+                    data-model-name="Bina"
+                    class="model-entity"
+                    visible="false">
+                </a-entity>
+            </a-marker>
+            
+            <!-- KANJI işaretçisi - Fred modeli -->
+            <a-marker preset="kanji" id="kanji-marker" smooth="true" smoothCount="5" registerevents>
+                <a-entity
+                    id="fred-entity"
+                    position="0 0 0"
+                    rotation="0 0 0"
+                    scale="0.5 0.5 0.5"
+                    gltf-model="#fred-model"
+                    touch-controls
+                    data-model-name="Fred"
+                    class="model-entity"
+                    visible="false">
+                </a-entity>
+            </a-marker>
+            
+            <!-- Pattern işaretçisi - Building modeli -->
+            <a-marker preset="pattern" type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/patt/pattern-marker.patt" id="pattern-marker" smooth="true" smoothCount="5" registerevents>
+                <a-entity
+                    id="building-entity"
+                    position="0 0 0"
+                    rotation="0 0 0"
+                    scale="0.8 0.8 0.8"
+                    gltf-model="#building-model"
+                    touch-controls
+                    data-model-name="Building"
+                    class="model-entity"
+                    visible="false">
+                </a-entity>
+            </a-marker>
+        </a-entity>
+
+        <!-- Kalıcı modeller -->
+        <a-entity id="persistent-models"></a-entity>
 
         <!-- Camera -->
-        <a-entity camera></a-entity>
+        <a-entity camera look-controls></a-entity>
     </a-scene>
 
     <script>
+        // İşaretçi olaylarını kaydetmek için komponent
+        AFRAME.registerComponent('registerevents', {
+            init: function () {
+                const marker = this.el;
+                const modelEntity = marker.querySelector('.model-entity');
+                const modelId = modelEntity.id;
+                const modelName = modelEntity.getAttribute('data-model-name');
+                const modelScale = modelEntity.getAttribute('scale');
+                const modelSrc = modelEntity.getAttribute('gltf-model');
+                
+                // İşaretçi bulunduğunda
+                marker.addEventListener('markerFound', function () {
+                    console.log('İşaretçi bulundu:', marker.id, 'Model:', modelName);
+                    
+                    // Modeli görünür yap
+                    modelEntity.setAttribute('visible', 'true');
+                    
+                    // Aktif model bilgisini güncelle
+                    document.getElementById('marker-message').style.display = 'none';
+                    document.getElementById('marker-info').style.display = 'block';
+                    document.getElementById('active-model').textContent = modelName;
+                    
+                    // Kalıcı model var mı kontrol et
+                    const persistentModelId = `persistent-${modelId}`;
+                    let persistentModel = document.getElementById(persistentModelId);
+                    
+                    if (!persistentModel) {
+                        // Kalıcı model yoksa oluştur
+                        const persistentModelsContainer = document.getElementById('persistent-models');
+                        
+                        persistentModel = document.createElement('a-entity');
+                        persistentModel.id = persistentModelId;
+                        persistentModel.setAttribute('gltf-model', modelSrc);
+                        persistentModel.setAttribute('scale', modelScale);
+                        persistentModel.setAttribute('data-model-name', modelName);
+                        persistentModel.setAttribute('touch-controls', '');
+                        persistentModel.setAttribute('visible', 'false');
+                        
+                        persistentModelsContainer.appendChild(persistentModel);
+                    }
+                    
+                    // İşaretçinin dünya koordinatlarını al
+                    const markerWorldPosition = new THREE.Vector3();
+                    const markerWorldRotation = new THREE.Quaternion();
+                    const markerWorldScale = new THREE.Vector3();
+                    
+                    marker.object3D.getWorldPosition(markerWorldPosition);
+                    marker.object3D.getWorldQuaternion(markerWorldRotation);
+                    marker.object3D.getWorldScale(markerWorldScale);
+                    
+                    // Kalıcı modelin pozisyonunu ve rotasyonunu güncelle
+                    persistentModel.object3D.position.copy(markerWorldPosition);
+                    persistentModel.object3D.quaternion.copy(markerWorldRotation);
+                    persistentModel.object3D.scale.copy(markerWorldScale);
+                });
+                
+                // İşaretçi kaybolduğunda
+                marker.addEventListener('markerLost', function () {
+                    console.log('İşaretçi kayboldu:', marker.id);
+                    
+                    // Orijinal modeli gizle
+                    modelEntity.setAttribute('visible', 'false');
+                    
+                    // Kalıcı modeli göster
+                    const persistentModelId = `persistent-${modelId}`;
+                    const persistentModel = document.getElementById(persistentModelId);
+                    
+                    if (persistentModel) {
+                        persistentModel.setAttribute('visible', 'true');
+                    }
+                });
+            }
+        });
+
         // Parmak kontrolleri için komponent
         AFRAME.registerComponent('touch-controls', {
             init: function() {
-                this.scale = 1;
+                this.scale = this.el.getAttribute('scale').x;
                 this.rotation = { x: 0, y: 0, z: 0 };
                 
                 // Touch olaylarını dinle
@@ -156,44 +297,30 @@
         });
 
         // Model yüklendiğinde yükleme ekranını kaldır
-        document.querySelector('a-entity[gltf-model]').addEventListener('model-loaded', function(event) {
-            console.log('Model başarıyla yüklendi:', event);
-            document.getElementById('loading').style.display = 'none';
-        });
-        
-        // Model yükleme hatası
-        document.querySelector('a-entity[gltf-model]').addEventListener('model-error', function(event) {
-            console.error('Model yükleme hatası:', event);
-            document.querySelector('.loading-text').innerHTML = 'Model yüklenemedi!<br>Lütfen sayfayı yenileyin veya başka bir model deneyin.';
-        });
-        
-        // İşaretçi görünürlüğünü kontrol et
-        const marker = document.querySelector('a-marker');
-        const markerMessage = document.getElementById('marker-message');
-        
-        marker.addEventListener('markerFound', function() {
-            console.log('İşaretçi bulundu');
-            markerMessage.style.display = 'none';
-        });
-        
-        marker.addEventListener('markerLost', function() {
-            console.log('İşaretçi kayboldu');
-            markerMessage.style.display = 'block';
+        document.querySelectorAll('a-entity[gltf-model]').forEach(function(entity) {
+            entity.addEventListener('model-loaded', function(event) {
+                console.log('Model başarıyla yüklendi:', entity.id);
+                document.getElementById('loading').style.display = 'none';
+            });
+            
+            entity.addEventListener('model-error', function(event) {
+                console.error('Model yükleme hatası:', entity.id, event);
+            });
         });
         
         // Sayfa yüklendiğinde
         window.addEventListener('load', function() {
             console.log('Sayfa yüklendi');
-            console.log('Model dosya yolu:', document.querySelector('#model').getAttribute('src'));
             
             // 5 saniye sonra yükleme ekranını kaldır (yedek çözüm)
             setTimeout(function() {
                 document.getElementById('loading').style.display = 'none';
             }, 5000);
             
-            // İşaretçi görüntüsünü göster
-            const hiroMarkerUrl = document.querySelector('#hiro-marker').getAttribute('src');
-            console.log('İşaretçi URL:', hiroMarkerUrl);
+            // İşaretçi görsellerini konsola yazdır
+            console.log('HIRO işaretçisi:', document.querySelector('#hiro-marker-img').getAttribute('src'));
+            console.log('KANJI işaretçisi:', document.querySelector('#kanji-marker-img').getAttribute('src'));
+            console.log('Pattern işaretçisi:', document.querySelector('#pattern-marker-img').getAttribute('src'));
         });
     </script>
 </body>
