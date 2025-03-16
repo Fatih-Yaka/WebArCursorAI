@@ -4,30 +4,58 @@
     <title>İnşaat AR Projesi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script>
-        AFRAME.registerComponent('persistent-model', {
-            init: function () {
-                this.isVisible = false;
-                this.worldPosition = new THREE.Vector3();
-                this.worldRotation = new THREE.Euler();
+        // Parmak hareketleriyle etkileşim bileşeni
+        AFRAME.registerComponent('gesture-handler', {
+            schema: {
+                enabled: {default: true},
+                minScale: {type: 'number', default: 0.3},
+                maxScale: {type: 'number', default: 8}
+            },
+            
+            init: function() {
+                this.initialScale = this.el.object3D.scale.clone();
+                this.scaleFactor = 1;
                 
-                this.el.sceneEl.addEventListener('markerFound', () => {
-                    if (!this.isVisible) {
-                        this.isVisible = true;
-                        this.el.object3D.getWorldPosition(this.worldPosition);
-                        this.el.object3D.getWorldQuaternion(this.worldRotation);
-                    }
-                    this.el.setAttribute('visible', true);
-                });
-
-                this.el.sceneEl.addEventListener('markerLost', () => {
-                    if (this.isVisible) {
-                        this.el.setAttribute('position', this.worldPosition);
-                        this.el.setAttribute('rotation', this.worldRotation);
-                        this.el.setAttribute('visible', true);
-                    }
-                });
+                this.el.sceneEl.addEventListener('touchstart', this.onTouchStart.bind(this));
+                this.el.sceneEl.addEventListener('touchmove', this.onTouchMove.bind(this));
+                this.el.sceneEl.addEventListener('touchend', this.onTouchEnd.bind(this));
+            },
+            
+            onTouchStart: function(evt) {
+                if (evt.touches.length === 2) {
+                    this.touchStartDistance = this.getTouchDistance(evt.touches);
+                }
+            },
+            
+            onTouchMove: function(evt) {
+                if (evt.touches.length === 2) {
+                    const currentDistance = this.getTouchDistance(evt.touches);
+                    const distanceRatio = currentDistance / this.touchStartDistance;
+                    
+                    this.scaleFactor = Math.min(
+                        this.data.maxScale / this.initialScale.x,
+                        Math.max(this.data.minScale / this.initialScale.x, this.scaleFactor * distanceRatio)
+                    );
+                    
+                    this.el.object3D.scale.set(
+                        this.initialScale.x * this.scaleFactor,
+                        this.initialScale.y * this.scaleFactor,
+                        this.initialScale.z * this.scaleFactor
+                    );
+                    
+                    this.touchStartDistance = currentDistance;
+                }
+            },
+            
+            onTouchEnd: function(evt) {
+                // Dokunma bittiğinde yapılacak işlemler
+            },
+            
+            getTouchDistance: function(touches) {
+                const dx = touches[0].pageX - touches[1].pageX;
+                const dy = touches[0].pageY - touches[1].pageY;
+                return Math.sqrt(dx * dx + dy * dy);
             }
         });
     </script>
@@ -36,49 +64,32 @@
 <body>
     <div class="arjs-loader">
         <div class="loading-text">
-            Kamera başlatılıyor...<br><br>
-            Lütfen kamera izni verin
+            Uygulama yükleniyor...<br><br>
+            Lütfen bekleyin
         </div>
     </div>
     
     <div class="instructions">
-        ▪ Kamerayı tabeladaki işaretçiye doğrultun<br>
-        ▪ Model konumu sabitlenecektir<br>
-        ▪ İşaretçi kaybolsa bile model görünmeye devam edecektir
+        ▪ Modeli büyütmek/küçültmek için iki parmağınızı kullanın<br>
+        ▪ Modeli döndürmek için tek parmağınızla sürükleyin
     </div>
 
     <a-scene
         embedded
-        arjs='sourceType: webcam; debugUIEnabled: false; trackingMethod: best; patternRatio: 0.75; detectionMode: mono_and_matrix;'
         vr-mode-ui="enabled: false"
         renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true;">
         
         <a-assets>
-            <a-asset-item id="building-model" src="assets/BuildingModel.glb"></a-asset-item>
+            <a-asset-item id="building-model" src="assets/yeni-modeliniz.glb"></a-asset-item>
         </a-assets>
 
-        <a-entity id="persistent-parent" position="0 0 0">
-            <a-marker 
-                type="pattern"
-                url="assets/Building.patt"
-                smooth="true"
-                smoothCount="5"
-                smoothTolerance="0.01"
-                smoothThreshold="2"
-                raycaster="objects: .clickable"
-                emitevents="true">
-                
-                <a-entity
-                    id="building"
-                    position="1 0 0"
-                    scale="0.5 0.5 0.5"
-                    rotation="0 0 0"
-                    gltf-model="#building-model"
-                    class="clickable"
-                    persistent-model>
-                </a-entity>
-                
-            </a-marker>
+        <a-entity
+            position="0 0 -3"
+            rotation="0 0 0"
+            scale="0.05 0.05 0.05"
+            gltf-model="#building-model"
+            class="clickable"
+            gesture-handler>
         </a-entity>
 
         <a-entity camera look-controls="enabled: true" position="0 1.6 0"></a-entity>
