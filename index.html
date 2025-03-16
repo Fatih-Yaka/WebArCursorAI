@@ -246,6 +246,13 @@
                     
                     // Modeli touch-controls ile kontrol edilebilir yap
                     persistentModel.setAttribute('touch-controls', '');
+                    
+                    console.log('Model inceleme için yerleştirildi:', modelName);
+                    
+                    // Kullanıcıya bilgi ver
+                    document.getElementById('marker-message').style.display = 'none';
+                    document.getElementById('marker-info').style.display = 'block';
+                    document.getElementById('active-model').textContent = `${modelName} (İnceleme Modu)`;
                 }
             }
         }
@@ -363,29 +370,63 @@
             },
             init: function() {
                 if (!this.el.getAttribute('touch-controls-registered')) {
-                    this.scale = this.el.getAttribute('scale').x;
-                    this.rotation = { x: 0, y: 0, z: 0 };
+                    // Başlangıç değerlerini al
+                    const currentScale = this.el.getAttribute('scale');
+                    const currentRotation = this.el.getAttribute('rotation');
+                    
+                    this.scale = currentScale.x || 0.3;
+                    this.rotation = { 
+                        x: currentRotation ? currentRotation.x : 0, 
+                        y: currentRotation ? currentRotation.y : 0, 
+                        z: currentRotation ? currentRotation.z : 0 
+                    };
+                    
+                    // Referansı sakla
+                    this.entityEl = this.el;
                     
                     // Touch olaylarını dinle
-                    document.addEventListener('touchstart', this.onTouchStart.bind(this));
-                    document.addEventListener('touchmove', this.onTouchMove.bind(this));
-                    document.addEventListener('touchend', this.onTouchEnd.bind(this));
+                    this.onTouchStartBound = this.onTouchStart.bind(this);
+                    this.onTouchMoveBound = this.onTouchMove.bind(this);
+                    this.onTouchEndBound = this.onTouchEnd.bind(this);
+                    
+                    document.addEventListener('touchstart', this.onTouchStartBound);
+                    document.addEventListener('touchmove', this.onTouchMoveBound);
+                    document.addEventListener('touchend', this.onTouchEndBound);
                     
                     this.el.setAttribute('touch-controls-registered', 'true');
+                    
+                    console.log('Touch controls başlatıldı:', this.el.id);
                 }
             },
             
+            remove: function() {
+                // Bileşen kaldırıldığında olay dinleyicilerini temizle
+                document.removeEventListener('touchstart', this.onTouchStartBound);
+                document.removeEventListener('touchmove', this.onTouchMoveBound);
+                document.removeEventListener('touchend', this.onTouchEndBound);
+                console.log('Touch controls kaldırıldı:', this.el.id);
+            },
+            
             onTouchStart: function(event) {
+                // Sadece inceleme modunda veya model görünürse işlem yap
+                if (!this.el.getAttribute('visible') && !inspectMode) return;
+                
                 this.touchStartX = event.touches[0].clientX;
                 this.touchStartY = event.touches[0].clientY;
+                this.isTouching = true;
                 
                 // İki parmak varsa başlangıç mesafesini kaydet
                 if (event.touches.length === 2) {
                     this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
+                    console.log('İki parmak başlangıç mesafesi:', this.initialDistance);
                 }
             },
             
             onTouchMove: function(event) {
+                // Sadece inceleme modunda veya model görünürse işlem yap
+                if (!this.el.getAttribute('visible') && !inspectMode) return;
+                if (!this.isTouching) return;
+                
                 event.preventDefault();
                 
                 // Tek parmak ile döndürme
@@ -393,19 +434,29 @@
                     const deltaX = event.touches[0].clientX - this.touchStartX;
                     const deltaY = event.touches[0].clientY - this.touchStartY;
                     
+                    // Y ekseni etrafında döndürme (sağ-sol)
                     this.rotation.y += deltaX * 1.0;
+                    
+                    // X ekseni etrafında döndürme (yukarı-aşağı)
                     this.rotation.x += deltaY * 1.0;
                     
                     this.touchStartX = event.touches[0].clientX;
                     this.touchStartY = event.touches[0].clientY;
+                    
+                    console.log('Döndürme:', this.rotation);
                 }
                 // İki parmak ile boyutlandırma
                 else if (event.touches.length === 2) {
                     const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
-                    const scale = currentDistance / this.initialDistance;
+                    const scaleFactor = currentDistance / this.initialDistance;
                     
-                    this.scale = Math.max(0.1, Math.min(1.5, this.scale * scale));
+                    // Boyutu güncelle (0.1 ile 1.5 arasında sınırla)
+                    const newScale = this.scale * scaleFactor;
+                    this.scale = Math.max(0.1, Math.min(1.5, newScale));
+                    
                     this.initialDistance = currentDistance;
+                    
+                    console.log('Boyutlandırma:', this.scale);
                 }
                 
                 // Değişiklikleri uygula
@@ -413,7 +464,7 @@
             },
             
             onTouchEnd: function() {
-                // Touch olayı bittiğinde yapılacak işlemler
+                this.isTouching = false;
             },
             
             getDistance: function(touch1, touch2) {
@@ -423,6 +474,7 @@
             },
             
             updateTransform: function() {
+                // Rotasyon ve ölçeği güncelle
                 this.el.setAttribute('rotation', `${this.rotation.x} ${this.rotation.y} ${this.rotation.z}`);
                 this.el.setAttribute('scale', `${this.scale} ${this.scale} ${this.scale}`);
             }
