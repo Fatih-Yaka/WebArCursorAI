@@ -4,39 +4,56 @@
     <title>3D Model Görüntüleme</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        .arjs-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+    </style>
 </head>
 <body>
-    <div class="arjs-loader">
+    <div class="arjs-loader" id="loading">
         <div class="loading-text">
             Model yükleniyor...<br><br>
             Lütfen bekleyin
         </div>
     </div>
 
-    <a-scene 
-        vr-mode-ui="enabled: false"
-        embedded
-        renderer="antialias: true; alpha: true">
+    <a-scene background="color: #FAFAFA">
+        <!-- Asset Management System -->
+        <a-assets>
+            <a-asset-item id="model" src="assets/fred.glb"></a-asset-item>
+        </a-assets>
         
         <!-- Model -->
         <a-entity
-            id="building-model"
             position="0 0 -3"
             rotation="0 0 0"
             scale="0.5 0.5 0.5"
-            gltf-model="#building-model"
-            gesture-handler
-            model-loaded>
+            gltf-model="#model">
         </a-entity>
 
-        <!-- Asset Management System -->
-        <a-assets>
-            <a-asset-item id="building-model" src="assets/fred.glb"></a-asset-item>
-        </a-assets>
-
         <!-- Camera -->
-        <a-entity camera="fov: 60"></a-entity>
+        <a-entity camera look-controls></a-entity>
 
         <!-- Işık -->
         <a-light type="ambient" color="#fff" intensity="0.5"></a-light>
@@ -44,83 +61,20 @@
     </a-scene>
 
     <script>
-        // Model yükleme kontrolü
-        AFRAME.registerComponent('model-loaded', {
-            init: function() {
-                this.el.addEventListener('model-loaded', () => {
-                    console.log('Model başarıyla yüklendi');
-                    document.querySelector('.arjs-loader').style.display = 'none';
-                });
-                
-                this.el.addEventListener('model-error', () => {
-                    console.error('Model yüklenemedi');
-                    document.querySelector('.arjs-loader').innerHTML = `
-                        <div class="loading-text">
-                            Model yüklenemedi!<br>
-                            Lütfen sayfayı yenileyin.
-                        </div>`;
-                });
-            }
+        // Model yüklendiğinde yükleme ekranını kaldır
+        document.querySelector('a-entity[gltf-model]').addEventListener('model-loaded', function() {
+            console.log('Model yüklendi');
+            document.getElementById('loading').style.display = 'none';
         });
         
-        // Parmak kontrolleri
-        AFRAME.registerComponent('gesture-handler', {
-            init: function() {
-                this.scale = 0.5;
-                this.rotation = { x: 0, y: 0, z: 0 };
-                
-                this.el.sceneEl.addEventListener('touchstart', this.onTouchStart.bind(this));
-                this.el.sceneEl.addEventListener('touchmove', this.onTouchMove.bind(this));
-                this.el.sceneEl.addEventListener('touchend', this.onTouchEnd.bind(this));
-            },
+        // Sayfa yüklendiğinde
+        window.addEventListener('load', function() {
+            console.log('Sayfa yüklendi');
             
-            onTouchStart: function(event) {
-                this.touchStartX = event.touches[0].clientX;
-                this.touchStartY = event.touches[0].clientY;
-                
-                if (event.touches.length === 2) {
-                    this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
-                }
-            },
-            
-            onTouchMove: function(event) {
-                event.preventDefault();
-                
-                if (event.touches.length === 1) {
-                    const deltaX = event.touches[0].clientX - this.touchStartX;
-                    const deltaY = event.touches[0].clientY - this.touchStartY;
-                    
-                    this.rotation.y += deltaX * 0.5;
-                    this.rotation.x += deltaY * 0.5;
-                    
-                    this.touchStartX = event.touches[0].clientX;
-                    this.touchStartY = event.touches[0].clientY;
-                }
-                else if (event.touches.length === 2) {
-                    const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
-                    const scale = currentDistance / this.initialDistance;
-                    
-                    this.scale = Math.max(0.1, Math.min(2, this.scale * scale));
-                    this.initialDistance = currentDistance;
-                }
-                
-                this.updateTransform();
-            },
-            
-            onTouchEnd: function() {
-                // Touch olayı bittiğinde yapılacak işlemler
-            },
-            
-            getDistance: function(touch1, touch2) {
-                const dx = touch1.clientX - touch2.clientX;
-                const dy = touch1.clientY - touch2.clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            },
-            
-            updateTransform: function() {
-                this.el.setAttribute('rotation', `${this.rotation.x} ${this.rotation.y} ${this.rotation.z}`);
-                this.el.setAttribute('scale', `${this.scale} ${this.scale} ${this.scale}`);
-            }
+            // 5 saniye sonra yükleme ekranını kaldır (yedek çözüm)
+            setTimeout(function() {
+                document.getElementById('loading').style.display = 'none';
+            }, 5000);
         });
     </script>
 </body>
