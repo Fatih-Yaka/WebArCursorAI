@@ -97,8 +97,8 @@
             
             <!-- İşaretçi Görselleri -->
             <img id="hiro-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
-            <img id="kanji-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/KANJI.jpg" alt="KANJI Marker">
-            <img id="pattern-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/pattern-marker.png" alt="Pattern Marker">
+            <img id="fred-marker-img" src="assets/fred-marker.png" alt="Fred Marker">
+            <img id="building-marker-img" src="assets/building-marker.png" alt="Building Marker">
         </a-assets>
         
         <!-- Dünya koordinat sistemi -->
@@ -119,8 +119,8 @@
                 </a-entity>
             </a-marker>
             
-            <!-- KANJI işaretçisi - Fred modeli -->
-            <a-marker preset="kanji" id="kanji-marker" smooth="true" smoothCount="5" registerevents>
+            <!-- Fred işaretçisi - Fred modeli -->
+            <a-marker type="pattern" url="assets/fred.patt" id="fred-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="fred-entity"
                     position="0 0 0"
@@ -134,8 +134,8 @@
                 </a-entity>
             </a-marker>
             
-            <!-- Pattern işaretçisi - Building modeli -->
-            <a-marker preset="pattern" type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/patt/pattern-marker.patt" id="pattern-marker" smooth="true" smoothCount="5" registerevents>
+            <!-- Building işaretçisi - Building modeli -->
+            <a-marker type="pattern" url="assets/buildmodel2.patt" id="building-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="building-entity"
                     position="0 0 0"
@@ -322,8 +322,8 @@
             
             // İşaretçi görsellerini konsola yazdır
             console.log('HIRO işaretçisi:', document.querySelector('#hiro-marker-img').getAttribute('src'));
-            console.log('KANJI işaretçisi:', document.querySelector('#kanji-marker-img').getAttribute('src'));
-            console.log('Pattern işaretçisi:', document.querySelector('#pattern-marker-img').getAttribute('src'));
+            console.log('Fred işaretçisi:', document.querySelector('#fred-marker-img').getAttribute('src'));
+            console.log('Building işaretçisi:', document.querySelector('#building-marker-img').getAttribute('src'));
         });
 
         // Kamera başlatıldığında
