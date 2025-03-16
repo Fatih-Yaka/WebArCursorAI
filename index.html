@@ -45,15 +45,15 @@
     <a-scene background="color: #FAFAFA" vr-mode-ui="enabled: false">
         <!-- Asset Management System -->
         <a-assets>
-            <a-asset-item id="model" src="assets/BuildingModel2.glb"></a-asset-item>
+            <a-asset-item id="model" src="./assets/Bina.glb"></a-asset-item>
         </a-assets>
         
         <!-- Model -->
         <a-entity
             id="model-entity"
-            position="0 0 -3"
-            rotation="0 0 0"
-            scale="0.5 0.5 0.5"
+            position="0 -2 -5"
+            rotation="0 180 0"
+            scale="0.8 0.8 0.8"
             gltf-model="#model"
             touch-controls>
         </a-entity>
