@@ -94,6 +94,22 @@ AFRAME.registerComponent('persistent-model', {
         this.el.setAttribute('position', '1 0 0');
         this.el.setAttribute('rotation', '0 0 0');
         this.el.setAttribute('scale', '0.5 0.5 0.5');
+        
+        // Model yüklendiğinde
+        this.el.addEventListener('model-loaded', () => {
+            console.log('Model yüklendi');
+            document.querySelector('.arjs-loader').style.display = 'none';
+        });
+        
+        // Model hatası durumunda
+        this.el.addEventListener('model-error', () => {
+            console.error('Model yüklenemedi');
+            document.querySelector('.arjs-loader').innerHTML = `
+                <div class="loading-text">
+                    Model yüklenemedi!<br>
+                    Lütfen sayfayı yenileyin.
+                </div>`;
+        });
     },
     tick: function() {
         // Model görünürlüğünü sürekli açık tut
@@ -110,10 +126,17 @@ window.addEventListener('load', function() {
         console.log('AR.js yüklendi');
     }
     
-    // Model yüklendiğinde
-    const model = document.querySelector('#building-model');
-    model.addEventListener('model-loaded', function() {
-        console.log('Model yüklendi');
+    // Kamera hatası durumunda
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener('camera-error', () => {
+        document.querySelector('.arjs-loader').innerHTML = `
+            <div class="loading-text">
+                Kamera erişimi hatası!<br>
+                Lütfen:<br>
+                1. Chrome tarayıcısını kullanın<br>
+                2. Kamera izinlerini kontrol edin<br>
+                3. Sayfayı yenileyin
+            </div>`;
     });
 });
 
