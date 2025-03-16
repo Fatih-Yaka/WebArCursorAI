@@ -1,121 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Bina Görüntüleme</title>
+    <title>3D Model Görüntüleme</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: https://aframe.io https://raw.githack.com">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <link rel="stylesheet" href="styles.css">
-    <script>
-        // Model yükleme durumunu kontrol etmek için
-        AFRAME.registerComponent('model-loaded', {
-            init: function() {
-                this.el.addEventListener('model-loaded', () => {
-                    console.log('Model başarıyla yüklendi');
-                    document.querySelector('.arjs-loader').style.display = 'none';
-                });
-                
-                this.el.addEventListener('model-error', () => {
-                    console.error('Model yüklenemedi');
-                    alert('Model yüklenemedi. Lütfen sayfayı yenileyin.');
-                });
-            }
-        });
-        
-        // Parmak hareketleriyle etkileşim bileşeni
-        AFRAME.registerComponent('gesture-handler', {
-            schema: {
-                enabled: {default: true},
-                minScale: {type: 'number', default: 0.3},
-                maxScale: {type: 'number', default: 8}
-            },
-            
-            init: function() {
-                this.initialScale = this.el.object3D.scale.clone();
-                this.scaleFactor = 1;
-                
-                this.el.sceneEl.addEventListener('touchstart', this.onTouchStart.bind(this));
-                this.el.sceneEl.addEventListener('touchmove', this.onTouchMove.bind(this));
-                this.el.sceneEl.addEventListener('touchend', this.onTouchEnd.bind(this));
-            },
-            
-            onTouchStart: function(evt) {
-                if (evt.touches.length === 2) {
-                    this.touchStartDistance = this.getTouchDistance(evt.touches);
-                }
-            },
-            
-            onTouchMove: function(evt) {
-                if (evt.touches.length === 2) {
-                    const currentDistance = this.getTouchDistance(evt.touches);
-                    const distanceRatio = currentDistance / this.touchStartDistance;
-                    
-                    this.scaleFactor = Math.min(
-                        this.data.maxScale / this.initialScale.x,
-                        Math.max(this.data.minScale / this.initialScale.x, this.scaleFactor * distanceRatio)
-                    );
-                    
-                    this.el.object3D.scale.set(
-                        this.initialScale.x * this.scaleFactor,
-                        this.initialScale.y * this.scaleFactor,
-                        this.initialScale.z * this.scaleFactor
-                    );
-                    
-                    this.touchStartDistance = currentDistance;
-                }
-            },
-            
-            onTouchEnd: function(evt) {
-                // Dokunma bittiğinde yapılacak işlemler
-            },
-            
-            getTouchDistance: function(touches) {
-                const dx = touches[0].pageX - touches[1].pageX;
-                const dy = touches[0].pageY - touches[1].pageY;
-                return Math.sqrt(dx * dx + dy * dy);
-            }
-        });
-    </script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        .arjs-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .loading-text {
-            color: white;
-            font-size: 24px;
-            text-align: center;
-        }
-        .instructions {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 10px;
-            text-align: center;
-            z-index: 999;
-        }
-    </style>
 </head>
 <body>
     <div class="arjs-loader">
         <div class="loading-text">
-            Kamera başlatılıyor...<br><br>
+            Model yükleniyor...<br><br>
             Lütfen bekleyin
         </div>
     </div>
@@ -123,7 +17,6 @@
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
-        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false; sourceWidth: 1280; sourceHeight: 960; displayWidth: window.innerWidth; displayHeight: window.innerHeight; trackingMethod: best;"
         renderer="antialias: true; alpha: true">
         
         <!-- Model -->
@@ -144,7 +37,91 @@
 
         <!-- Camera -->
         <a-entity camera="fov: 60"></a-entity>
+
+        <!-- Işık -->
+        <a-light type="ambient" color="#fff" intensity="0.5"></a-light>
+        <a-light type="directional" color="#fff" intensity="1" position="1 1 1"></a-light>
     </a-scene>
-    <script src="app.js"></script>
+
+    <script>
+        // Model yükleme kontrolü
+        AFRAME.registerComponent('model-loaded', {
+            init: function() {
+                this.el.addEventListener('model-loaded', () => {
+                    console.log('Model başarıyla yüklendi');
+                    document.querySelector('.arjs-loader').style.display = 'none';
+                });
+                
+                this.el.addEventListener('model-error', () => {
+                    console.error('Model yüklenemedi');
+                    document.querySelector('.arjs-loader').innerHTML = `
+                        <div class="loading-text">
+                            Model yüklenemedi!<br>
+                            Lütfen sayfayı yenileyin.
+                        </div>`;
+                });
+            }
+        });
+        
+        // Parmak kontrolleri
+        AFRAME.registerComponent('gesture-handler', {
+            init: function() {
+                this.scale = 0.5;
+                this.rotation = { x: 0, y: 0, z: 0 };
+                
+                this.el.sceneEl.addEventListener('touchstart', this.onTouchStart.bind(this));
+                this.el.sceneEl.addEventListener('touchmove', this.onTouchMove.bind(this));
+                this.el.sceneEl.addEventListener('touchend', this.onTouchEnd.bind(this));
+            },
+            
+            onTouchStart: function(event) {
+                this.touchStartX = event.touches[0].clientX;
+                this.touchStartY = event.touches[0].clientY;
+                
+                if (event.touches.length === 2) {
+                    this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
+                }
+            },
+            
+            onTouchMove: function(event) {
+                event.preventDefault();
+                
+                if (event.touches.length === 1) {
+                    const deltaX = event.touches[0].clientX - this.touchStartX;
+                    const deltaY = event.touches[0].clientY - this.touchStartY;
+                    
+                    this.rotation.y += deltaX * 0.5;
+                    this.rotation.x += deltaY * 0.5;
+                    
+                    this.touchStartX = event.touches[0].clientX;
+                    this.touchStartY = event.touches[0].clientY;
+                }
+                else if (event.touches.length === 2) {
+                    const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
+                    const scale = currentDistance / this.initialDistance;
+                    
+                    this.scale = Math.max(0.1, Math.min(2, this.scale * scale));
+                    this.initialDistance = currentDistance;
+                }
+                
+                this.updateTransform();
+            },
+            
+            onTouchEnd: function() {
+                // Touch olayı bittiğinde yapılacak işlemler
+            },
+            
+            getDistance: function(touch1, touch2) {
+                const dx = touch1.clientX - touch2.clientX;
+                const dy = touch1.clientY - touch2.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            },
+            
+            updateTransform: function() {
+                this.el.setAttribute('rotation', `${this.rotation.x} ${this.rotation.y} ${this.rotation.z}`);
+                this.el.setAttribute('scale', `${this.scale} ${this.scale} ${this.scale}`);
+            }
+        });
+    </script>
 </body>
 </html> 
