@@ -84,7 +84,8 @@
 
     <a-scene 
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraParametersUrl: https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/camera_para.dat;"
+        renderer="antialias: true; logarithmicDepthBuffer: true; precision: mediump; alpha: true;"
         vr-mode-ui="enabled: false">
         
         <!-- Asset Management System -->
@@ -190,7 +191,7 @@
                         persistentModel = document.createElement('a-entity');
                         persistentModel.id = persistentModelId;
                         persistentModel.setAttribute('gltf-model', modelSrc);
-                        persistentModel.setAttribute('scale', modelScale);
+                        persistentModel.setAttribute('scale', '0.5 0.5 0.5');
                         persistentModel.setAttribute('data-model-name', modelName);
                         persistentModel.setAttribute('touch-controls', '');
                         persistentModel.setAttribute('visible', 'false');
@@ -210,7 +211,9 @@
                     // Kalıcı modelin pozisyonunu ve rotasyonunu güncelle
                     persistentModel.object3D.position.copy(markerWorldPosition);
                     persistentModel.object3D.quaternion.copy(markerWorldRotation);
-                    persistentModel.object3D.scale.copy(markerWorldScale);
+                    
+                    // Modelin boyutunu sabit tut
+                    persistentModel.object3D.scale.set(0.5, 0.5, 0.5);
                 });
                 
                 // İşaretçi kaybolduğunda
@@ -312,15 +315,39 @@
         window.addEventListener('load', function() {
             console.log('Sayfa yüklendi');
             
-            // 5 saniye sonra yükleme ekranını kaldır (yedek çözüm)
+            // 3 saniye sonra yükleme ekranını kaldır (yedek çözüm)
             setTimeout(function() {
                 document.getElementById('loading').style.display = 'none';
-            }, 5000);
+            }, 3000);
             
             // İşaretçi görsellerini konsola yazdır
             console.log('HIRO işaretçisi:', document.querySelector('#hiro-marker-img').getAttribute('src'));
             console.log('KANJI işaretçisi:', document.querySelector('#kanji-marker-img').getAttribute('src'));
             console.log('Pattern işaretçisi:', document.querySelector('#pattern-marker-img').getAttribute('src'));
+        });
+
+        // Kamera başlatıldığında
+        document.querySelector('a-scene').addEventListener('camera-init', function() {
+            console.log('Kamera başlatıldı');
+            // Yükleme ekranını kaldır
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        document.querySelector('a-scene').addEventListener('loaded', function() {
+            console.log('Sahne yüklendi');
+            // Yükleme ekranını kaldır
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        // Modellerin boyutunu ve pozisyonunu düzelt
+        document.querySelectorAll('.model-entity').forEach(function(entity) {
+            entity.setAttribute('scale', '0.5 0.5 0.5');
+            entity.setAttribute('position', '0 0 0');
+        });
+
+        document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
+            entity.setAttribute('scale', '0.5 0.5 0.5');
+            entity.setAttribute('position', '0 0 0');
         });
     </script>
 </body>
