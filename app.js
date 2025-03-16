@@ -87,6 +87,26 @@ class ModelManager {
     }
 }
 
+// Model yükleme kontrolü
+AFRAME.registerComponent('model-loaded', {
+    init: function() {
+        this.el.addEventListener('model-loaded', () => {
+            console.log('Model başarıyla yüklendi');
+            this.el.setAttribute('visible', true);
+            document.querySelector('.arjs-loader').style.display = 'none';
+        });
+        
+        this.el.addEventListener('model-error', () => {
+            console.error('Model yüklenemedi');
+            document.querySelector('.arjs-loader').innerHTML = `
+                <div class="loading-text">
+                    Model yüklenemedi!<br>
+                    Lütfen sayfayı yenileyin.
+                </div>`;
+        });
+    }
+});
+
 // Parmak kontrolleri için komponent
 AFRAME.registerComponent('gesture-handler', {
     init: function() {
