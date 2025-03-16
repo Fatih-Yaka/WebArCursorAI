@@ -67,7 +67,7 @@
     </style>
 </head>
 <body>
-    <div class="arjs-loader" id="loading">
+    <div class="arjs-loader" id="loading" style="display: none;">
         <div class="loading-text">
             Kamera başlatılıyor...<br><br>
             Lütfen bekleyin
@@ -97,8 +97,6 @@
             
             <!-- İşaretçi Görselleri -->
             <img id="hiro-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
-            <img id="fred-marker-img" src="assets/fred-marker.png" alt="Fred Marker">
-            <img id="building-marker-img" src="assets/building-marker.png" alt="Building Marker">
         </a-assets>
         
         <!-- Dünya koordinat sistemi -->
@@ -236,14 +234,21 @@
 
         // Parmak kontrolleri için komponent
         AFRAME.registerComponent('touch-controls', {
+            schema: {
+                enabled: {default: true}
+            },
             init: function() {
-                this.scale = this.el.getAttribute('scale').x;
-                this.rotation = { x: 0, y: 0, z: 0 };
-                
-                // Touch olaylarını dinle
-                document.addEventListener('touchstart', this.onTouchStart.bind(this));
-                document.addEventListener('touchmove', this.onTouchMove.bind(this));
-                document.addEventListener('touchend', this.onTouchEnd.bind(this));
+                if (!this.el.getAttribute('touch-controls-registered')) {
+                    this.scale = this.el.getAttribute('scale').x;
+                    this.rotation = { x: 0, y: 0, z: 0 };
+                    
+                    // Touch olaylarını dinle
+                    document.addEventListener('touchstart', this.onTouchStart.bind(this));
+                    document.addEventListener('touchmove', this.onTouchMove.bind(this));
+                    document.addEventListener('touchend', this.onTouchEnd.bind(this));
+                    
+                    this.el.setAttribute('touch-controls-registered', 'true');
+                }
             },
             
             onTouchStart: function(event) {
@@ -322,8 +327,6 @@
             
             // İşaretçi görsellerini konsola yazdır
             console.log('HIRO işaretçisi:', document.querySelector('#hiro-marker-img').getAttribute('src'));
-            console.log('Fred işaretçisi:', document.querySelector('#fred-marker-img').getAttribute('src'));
-            console.log('Building işaretçisi:', document.querySelector('#building-marker-img').getAttribute('src'));
         });
 
         // Kamera başlatıldığında
