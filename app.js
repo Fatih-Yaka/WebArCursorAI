@@ -87,6 +87,72 @@ class ModelManager {
     }
 }
 
+// Parmak kontrolleri için komponent
+AFRAME.registerComponent('gesture-handler', {
+    init: function() {
+        this.scale = 0.5;
+        this.rotation = { x: 0, y: 0, z: 0 };
+        this.position = { x: 1, y: 0, z: 0 };
+        
+        // Touch olaylarını dinle
+        this.el.addEventListener('touchstart', this.onTouchStart.bind(this));
+        this.el.addEventListener('touchmove', this.onTouchMove.bind(this));
+        this.el.addEventListener('touchend', this.onTouchEnd.bind(this));
+    },
+    
+    onTouchStart: function(event) {
+        this.touchStartX = event.touches[0].clientX;
+        this.touchStartY = event.touches[0].clientY;
+        
+        // İki parmak varsa başlangıç mesafesini kaydet
+        if (event.touches.length === 2) {
+            this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
+        }
+    },
+    
+    onTouchMove: function(event) {
+        event.preventDefault();
+        
+        // Tek parmak ile döndürme
+        if (event.touches.length === 1) {
+            const deltaX = event.touches[0].clientX - this.touchStartX;
+            const deltaY = event.touches[0].clientY - this.touchStartY;
+            
+            this.rotation.y += deltaX * 0.5;
+            this.rotation.x += deltaY * 0.5;
+            
+            this.touchStartX = event.touches[0].clientX;
+            this.touchStartY = event.touches[0].clientY;
+        }
+        // İki parmak ile boyutlandırma
+        else if (event.touches.length === 2) {
+            const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
+            const scale = currentDistance / this.initialDistance;
+            
+            this.scale = Math.max(0.1, Math.min(2, this.scale * scale));
+            this.initialDistance = currentDistance;
+        }
+        
+        // Değişiklikleri uygula
+        this.updateTransform();
+    },
+    
+    onTouchEnd: function() {
+        // Touch olayı bittiğinde yapılacak işlemler
+    },
+    
+    getDistance: function(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    },
+    
+    updateTransform: function() {
+        this.el.setAttribute('rotation', `${this.rotation.x} ${this.rotation.y} ${this.rotation.z}`);
+        this.el.setAttribute('scale', `${this.scale} ${this.scale} ${this.scale}`);
+    }
+});
+
 // AR.js ve A-Frame için özel komponent
 AFRAME.registerComponent('persistent-model', {
     init: function() {
