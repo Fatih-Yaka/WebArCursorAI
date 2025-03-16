@@ -33,6 +33,21 @@
         .a-enter-vr {
             display: none !important;
         }
+        /* İşaretçi mesajı */
+        #marker-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: Arial, sans-serif;
+            z-index: 999;
+            text-align: center;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -43,6 +58,10 @@
         </div>
     </div>
 
+    <div id="marker-message">
+        Modeli görmek için HIRO işaretçisini kameraya gösterin
+    </div>
+
     <a-scene 
         embedded
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
@@ -51,17 +70,20 @@
         <!-- Asset Management System -->
         <a-assets>
             <a-asset-item id="model" src="assets/bina.glb" crossorigin="anonymous"></a-asset-item>
+            <img id="hiro-marker" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
         </a-assets>
         
-        <!-- Model -->
-        <a-entity
-            id="model-entity"
-            position="0 -0.5 -3"
-            rotation="0 0 0"
-            scale="1 1 1"
-            gltf-model="#model"
-            touch-controls>
-        </a-entity>
+        <!-- Marker ve Model -->
+        <a-marker preset="hiro" id="hiro-marker" smooth="true" smoothCount="5">
+            <a-entity
+                id="model-entity"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                gltf-model="#model"
+                touch-controls>
+            </a-entity>
+        </a-marker>
 
         <!-- Camera -->
         <a-entity camera></a-entity>
@@ -71,9 +93,8 @@
         // Parmak kontrolleri için komponent
         AFRAME.registerComponent('touch-controls', {
             init: function() {
-                this.scale = 0.5;
+                this.scale = 1;
                 this.rotation = { x: 0, y: 0, z: 0 };
-                this.position = { x: 0, y: 0, z: -3 };
                 
                 // Touch olaylarını dinle
                 document.addEventListener('touchstart', this.onTouchStart.bind(this));
@@ -146,6 +167,20 @@
             document.querySelector('.loading-text').innerHTML = 'Model yüklenemedi!<br>Lütfen sayfayı yenileyin veya başka bir model deneyin.';
         });
         
+        // İşaretçi görünürlüğünü kontrol et
+        const marker = document.querySelector('a-marker');
+        const markerMessage = document.getElementById('marker-message');
+        
+        marker.addEventListener('markerFound', function() {
+            console.log('İşaretçi bulundu');
+            markerMessage.style.display = 'none';
+        });
+        
+        marker.addEventListener('markerLost', function() {
+            console.log('İşaretçi kayboldu');
+            markerMessage.style.display = 'block';
+        });
+        
         // Sayfa yüklendiğinde
         window.addEventListener('load', function() {
             console.log('Sayfa yüklendi');
@@ -155,6 +190,10 @@
             setTimeout(function() {
                 document.getElementById('loading').style.display = 'none';
             }, 5000);
+            
+            // İşaretçi görüntüsünü göster
+            const hiroMarkerUrl = document.querySelector('#hiro-marker').getAttribute('src');
+            console.log('İşaretçi URL:', hiroMarkerUrl);
         });
     </script>
 </body>
