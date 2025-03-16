@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script>
+        // Model yükleme durumunu kontrol etmek için
+        AFRAME.registerComponent('model-loaded', {
+            init: function() {
+                this.el.addEventListener('model-loaded', () => {
+                    console.log('Model başarıyla yüklendi');
+                    document.querySelector('.arjs-loader').style.display = 'none';
+                });
+                
+                this.el.addEventListener('model-error', () => {
+                    console.error('Model yüklenemedi');
+                    alert('Model yüklenemedi. Lütfen sayfayı yenileyin.');
+                });
+            }
+        });
+        
         // Parmak hareketleriyle etkileşim bileşeni
         AFRAME.registerComponent('gesture-handler', {
             schema: {
@@ -59,7 +74,40 @@
             }
         });
     </script>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        .arjs-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            text-align: center;
+        }
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            z-index: 999;
+        }
+    </style>
 </head>
 <body>
     <div class="arjs-loader">
@@ -77,7 +125,7 @@
     <a-scene
         embedded
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true;">
+        renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; colorManagement: true;">
         
         <a-assets>
             <a-asset-item id="building-model" src="assets/yeni-modeliniz.glb"></a-asset-item>
@@ -86,16 +134,41 @@
         <a-entity
             position="0 0 -3"
             rotation="0 0 0"
-            scale="0.05 0.05 0.05"
+            scale="1 1 1"
             gltf-model="#building-model"
             class="clickable"
-            gesture-handler>
+            gesture-handler
+            model-loaded>
         </a-entity>
 
+        <a-sky color="#FFFFFF"></a-sky>
+        <a-entity light="type: ambient; color: #FFF; intensity: 1.0"></a-entity>
+        <a-entity light="type: directional; color: #FFF; intensity: 0.8" position="-1 1 1"></a-entity>
+        
         <a-entity camera look-controls="enabled: true" position="0 1.6 0"></a-entity>
         
     </a-scene>
 
-    <script src="app.js"></script>
+    <script>
+        // Sayfa yüklendiğinde çalışacak kod
+        window.onload = function() {
+            console.log('Sayfa yüklendi, model yükleniyor...');
+            
+            // Model dosyasının doğru yolda olup olmadığını kontrol et
+            const modelPath = document.querySelector('#building-model').getAttribute('src');
+            console.log('Model yolu:', modelPath);
+            
+            // Test amaçlı basit bir küp ekle (model yüklenemezse bunu göreceğiz)
+            setTimeout(() => {
+                const scene = document.querySelector('a-scene');
+                const testCube = document.createElement('a-box');
+                testCube.setAttribute('position', '0 0 -5');
+                testCube.setAttribute('color', 'red');
+                testCube.setAttribute('scale', '0.5 0.5 0.5');
+                scene.appendChild(testCube);
+                console.log('Test küpü eklendi');
+            }, 3000);
+        };
+    </script>
 </body>
 </html> 
