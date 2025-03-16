@@ -87,6 +87,36 @@ class ModelManager {
     }
 }
 
+// AR.js ve A-Frame için özel komponent
+AFRAME.registerComponent('persistent-model', {
+    init: function() {
+        this.el.setAttribute('visible', true);
+        this.el.setAttribute('position', '1 0 0');
+        this.el.setAttribute('rotation', '0 0 0');
+        this.el.setAttribute('scale', '0.5 0.5 0.5');
+    },
+    tick: function() {
+        // Model görünürlüğünü sürekli açık tut
+        this.el.setAttribute('visible', true);
+    }
+});
+
+// Sayfa yüklendiğinde
+window.addEventListener('load', function() {
+    console.log('Sayfa yüklendi');
+    
+    // AR.js yüklendiğinde
+    if (window.AR) {
+        console.log('AR.js yüklendi');
+    }
+    
+    // Model yüklendiğinde
+    const model = document.querySelector('#building-model');
+    model.addEventListener('model-loaded', function() {
+        console.log('Model yüklendi');
+    });
+});
+
 // Uygulama başlatma
 window.onload = function() {
     const arScene = new ARSceneManager();

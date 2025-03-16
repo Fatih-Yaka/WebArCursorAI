@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>İnşaat AR Projesi</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <title>AR Bina Görüntüleme</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <script>
         // Model yükleme durumunu kontrol etmek için
         AFRAME.registerComponent('model-loaded', {
@@ -109,7 +111,7 @@
         }
     </style>
 </head>
-<body>
+<body style="margin: 0; overflow: hidden;">
     <div class="arjs-loader">
         <div class="loading-text">
             Uygulama yükleniyor...<br><br>
@@ -122,53 +124,34 @@
         ▪ Modeli döndürmek için tek parmağınızla sürükleyin
     </div>
 
-    <a-scene
-        embedded
+    <a-scene 
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; colorManagement: true;">
+        embedded
+        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false; sourceWidth: 1280; sourceHeight: 960; displayWidth: window.innerWidth; displayHeight: window.innerHeight;"
+        renderer="antialias: true; alpha: true">
         
+        <!-- Marker -->
+        <a-marker preset="hiro">
+            <!-- Model -->
+            <a-entity
+                id="building-model"
+                position="1 0 0"
+                rotation="0 0 0"
+                scale="0.5 0.5 0.5"
+                gltf-model="#building-model"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
+                persistent-model>
+            </a-entity>
+        </a-marker>
+
+        <!-- Asset Management System -->
         <a-assets>
-            <a-asset-item id="building-model" src="assets/yeni-modeliniz.glb"></a-asset-item>
+            <a-asset-item id="building-model" src="assets/BuildingModel.glb"></a-asset-item>
         </a-assets>
 
-        <a-entity
-            position="0 0 -3"
-            rotation="0 0 0"
-            scale="1 1 1"
-            gltf-model="#building-model"
-            class="clickable"
-            gesture-handler
-            model-loaded>
-        </a-entity>
-
-        <a-sky color="#FFFFFF"></a-sky>
-        <a-entity light="type: ambient; color: #FFF; intensity: 1.0"></a-entity>
-        <a-entity light="type: directional; color: #FFF; intensity: 0.8" position="-1 1 1"></a-entity>
-        
-        <a-entity camera look-controls="enabled: true" position="0 1.6 0"></a-entity>
-        
+        <!-- Camera -->
+        <a-entity camera></a-entity>
     </a-scene>
-
-    <script>
-        // Sayfa yüklendiğinde çalışacak kod
-        window.onload = function() {
-            console.log('Sayfa yüklendi, model yükleniyor...');
-            
-            // Model dosyasının doğru yolda olup olmadığını kontrol et
-            const modelPath = document.querySelector('#building-model').getAttribute('src');
-            console.log('Model yolu:', modelPath);
-            
-            // Test amaçlı basit bir küp ekle (model yüklenemezse bunu göreceğiz)
-            setTimeout(() => {
-                const scene = document.querySelector('a-scene');
-                const testCube = document.createElement('a-box');
-                testCube.setAttribute('position', '0 0 -5');
-                testCube.setAttribute('color', 'red');
-                testCube.setAttribute('scale', '0.5 0.5 0.5');
-                scene.appendChild(testCube);
-                console.log('Test küpü eklendi');
-            }, 3000);
-        };
-    </script>
+    <script src="app.js"></script>
 </body>
 </html> 
