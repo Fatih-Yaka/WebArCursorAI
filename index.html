@@ -64,6 +64,29 @@
             text-align: center;
             display: none;
         }
+        /* İnceleme modu butonu */
+        #inspect-button {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50%;
+            font-size: 24px;
+            z-index: 999;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #inspect-button.active {
+            background-color: rgba(0, 120, 255, 0.7);
+        }
     </style>
 </head>
 <body>
@@ -81,6 +104,8 @@
     <div id="marker-info" id="marker-info">
         Aktif model: <span id="active-model">Yok</span>
     </div>
+
+    <button id="inspect-button">🔍</button>
 
     <a-scene 
         embedded
@@ -108,7 +133,7 @@
                     id="bina-entity"
                     position="0 0 0"
                     rotation="0 0 0"
-                    scale="1 1 1"
+                    scale="0.3 0.3 0.3"
                     gltf-model="#bina-model"
                     touch-controls
                     data-model-name="Bina"
@@ -123,7 +148,7 @@
                     id="fred-entity"
                     position="0 0 0"
                     rotation="0 0 0"
-                    scale="0.5 0.5 0.5"
+                    scale="0.3 0.3 0.3"
                     gltf-model="#fred-model"
                     touch-controls
                     data-model-name="Fred"
@@ -138,7 +163,7 @@
                     id="building-entity"
                     position="0 0 0"
                     rotation="0 0 0"
-                    scale="0.8 0.8 0.8"
+                    scale="0.3 0.3 0.3"
                     gltf-model="#building-model"
                     touch-controls
                     data-model-name="Building"
@@ -156,6 +181,93 @@
     </a-scene>
 
     <script>
+        // Global değişkenler
+        let inspectMode = false;
+        let activeModel = null;
+        
+        // İnceleme modu butonunu ayarla
+        const inspectButton = document.getElementById('inspect-button');
+        inspectButton.addEventListener('click', function() {
+            inspectMode = !inspectMode;
+            this.classList.toggle('active');
+            
+            if (inspectMode && activeModel) {
+                // İnceleme modunu aktifleştir
+                placeModelForInspection(activeModel);
+            } else {
+                // İnceleme modunu devre dışı bırak
+                resetModels();
+            }
+        });
+        
+        // Modeli inceleme için yerleştir
+        function placeModelForInspection(modelName) {
+            // Tüm kalıcı modelleri gizle
+            document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
+                entity.setAttribute('visible', 'false');
+            });
+            
+            // İlgili modeli bul ve ortaya yerleştir
+            const modelId = getModelIdByName(modelName);
+            if (modelId) {
+                const persistentModelId = `persistent-${modelId}`;
+                const persistentModel = document.getElementById(persistentModelId);
+                
+                if (persistentModel) {
+                    // Modeli görünür yap
+                    persistentModel.setAttribute('visible', 'true');
+                    
+                    // Modeli kameranın önüne yerleştir
+                    const camera = document.querySelector('a-entity[camera]');
+                    const cameraPosition = new THREE.Vector3();
+                    const cameraRotation = new THREE.Quaternion();
+                    
+                    camera.object3D.getWorldPosition(cameraPosition);
+                    camera.object3D.getWorldQuaternion(cameraRotation);
+                    
+                    // Kameranın önünde bir pozisyon hesapla
+                    const direction = new THREE.Vector3(0, 0, -1);
+                    direction.applyQuaternion(cameraRotation);
+                    direction.multiplyScalar(1); // Mesafe
+                    
+                    const targetPosition = new THREE.Vector3();
+                    targetPosition.addVectors(cameraPosition, direction);
+                    
+                    // Modeli yerleştir
+                    persistentModel.object3D.position.copy(targetPosition);
+                    persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
+                    
+                    // Modeli kameraya baktır
+                    persistentModel.object3D.lookAt(cameraPosition);
+                    
+                    // Modeli biraz döndür (daha iyi görünüm için)
+                    const currentRotation = persistentModel.getAttribute('rotation');
+                    persistentModel.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 180} ${currentRotation.z}`);
+                    
+                    // Modeli touch-controls ile kontrol edilebilir yap
+                    persistentModel.setAttribute('touch-controls', '');
+                }
+            }
+        }
+        
+        // Model ID'sini isimden bul
+        function getModelIdByName(modelName) {
+            const modelMap = {
+                'Bina': 'bina-entity',
+                'Fred': 'fred-entity',
+                'Building': 'building-entity'
+            };
+            
+            return modelMap[modelName];
+        }
+        
+        // Modelleri sıfırla
+        function resetModels() {
+            document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
+                entity.setAttribute('visible', 'false');
+            });
+        }
+
         // İşaretçi olaylarını kaydetmek için komponent
         AFRAME.registerComponent('registerevents', {
             init: function () {
@@ -170,63 +282,75 @@
                 marker.addEventListener('markerFound', function () {
                     console.log('İşaretçi bulundu:', marker.id, 'Model:', modelName);
                     
-                    // Modeli görünür yap
-                    modelEntity.setAttribute('visible', 'true');
+                    // Aktif modeli güncelle
+                    activeModel = modelName;
                     
-                    // Aktif model bilgisini güncelle
-                    document.getElementById('marker-message').style.display = 'none';
-                    document.getElementById('marker-info').style.display = 'block';
-                    document.getElementById('active-model').textContent = modelName;
-                    
-                    // Kalıcı model var mı kontrol et
-                    const persistentModelId = `persistent-${modelId}`;
-                    let persistentModel = document.getElementById(persistentModelId);
-                    
-                    if (!persistentModel) {
-                        // Kalıcı model yoksa oluştur
-                        const persistentModelsContainer = document.getElementById('persistent-models');
+                    // İnceleme modunda değilse normal davranış
+                    if (!inspectMode) {
+                        // Modeli görünür yap
+                        modelEntity.setAttribute('visible', 'true');
                         
-                        persistentModel = document.createElement('a-entity');
-                        persistentModel.id = persistentModelId;
-                        persistentModel.setAttribute('gltf-model', modelSrc);
-                        persistentModel.setAttribute('scale', '0.5 0.5 0.5');
-                        persistentModel.setAttribute('data-model-name', modelName);
-                        persistentModel.setAttribute('touch-controls', '');
-                        persistentModel.setAttribute('visible', 'false');
+                        // Aktif model bilgisini güncelle
+                        document.getElementById('marker-message').style.display = 'none';
+                        document.getElementById('marker-info').style.display = 'block';
+                        document.getElementById('active-model').textContent = modelName;
                         
-                        persistentModelsContainer.appendChild(persistentModel);
+                        // Kalıcı model var mı kontrol et
+                        const persistentModelId = `persistent-${modelId}`;
+                        let persistentModel = document.getElementById(persistentModelId);
+                        
+                        if (!persistentModel) {
+                            // Kalıcı model yoksa oluştur
+                            const persistentModelsContainer = document.getElementById('persistent-models');
+                            
+                            persistentModel = document.createElement('a-entity');
+                            persistentModel.id = persistentModelId;
+                            persistentModel.setAttribute('gltf-model', modelSrc);
+                            persistentModel.setAttribute('scale', '0.3 0.3 0.3');
+                            persistentModel.setAttribute('data-model-name', modelName);
+                            persistentModel.setAttribute('touch-controls', '');
+                            persistentModel.setAttribute('visible', 'false');
+                            
+                            persistentModelsContainer.appendChild(persistentModel);
+                        }
+                        
+                        // İşaretçinin dünya koordinatlarını al
+                        const markerWorldPosition = new THREE.Vector3();
+                        const markerWorldRotation = new THREE.Quaternion();
+                        const markerWorldScale = new THREE.Vector3();
+                        
+                        marker.object3D.getWorldPosition(markerWorldPosition);
+                        marker.object3D.getWorldQuaternion(markerWorldRotation);
+                        marker.object3D.getWorldScale(markerWorldScale);
+                        
+                        // Kalıcı modelin pozisyonunu ve rotasyonunu güncelle
+                        persistentModel.object3D.position.copy(markerWorldPosition);
+                        persistentModel.object3D.quaternion.copy(markerWorldRotation);
+                        
+                        // Modelin boyutunu sabit tut
+                        persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
+                    } else {
+                        // İnceleme modunda ise, modeli inceleme için yerleştir
+                        placeModelForInspection(modelName);
                     }
-                    
-                    // İşaretçinin dünya koordinatlarını al
-                    const markerWorldPosition = new THREE.Vector3();
-                    const markerWorldRotation = new THREE.Quaternion();
-                    const markerWorldScale = new THREE.Vector3();
-                    
-                    marker.object3D.getWorldPosition(markerWorldPosition);
-                    marker.object3D.getWorldQuaternion(markerWorldRotation);
-                    marker.object3D.getWorldScale(markerWorldScale);
-                    
-                    // Kalıcı modelin pozisyonunu ve rotasyonunu güncelle
-                    persistentModel.object3D.position.copy(markerWorldPosition);
-                    persistentModel.object3D.quaternion.copy(markerWorldRotation);
-                    
-                    // Modelin boyutunu sabit tut
-                    persistentModel.object3D.scale.set(0.5, 0.5, 0.5);
                 });
                 
                 // İşaretçi kaybolduğunda
                 marker.addEventListener('markerLost', function () {
                     console.log('İşaretçi kayboldu:', marker.id);
                     
-                    // Orijinal modeli gizle
-                    modelEntity.setAttribute('visible', 'false');
-                    
-                    // Kalıcı modeli göster
-                    const persistentModelId = `persistent-${modelId}`;
-                    const persistentModel = document.getElementById(persistentModelId);
-                    
-                    if (persistentModel) {
-                        persistentModel.setAttribute('visible', 'true');
+                    // İnceleme modunda değilse normal davranış
+                    if (!inspectMode) {
+                        // Orijinal modeli gizle
+                        modelEntity.setAttribute('visible', 'false');
+                        
+                        // Kalıcı modeli göster
+                        const persistentModelId = `persistent-${modelId}`;
+                        const persistentModel = document.getElementById(persistentModelId);
+                        
+                        if (persistentModel) {
+                            persistentModel.setAttribute('visible', 'true');
+                        }
                     }
                 });
             }
@@ -269,8 +393,8 @@
                     const deltaX = event.touches[0].clientX - this.touchStartX;
                     const deltaY = event.touches[0].clientY - this.touchStartY;
                     
-                    this.rotation.y += deltaX * 0.5;
-                    this.rotation.x += deltaY * 0.5;
+                    this.rotation.y += deltaX * 1.0;
+                    this.rotation.x += deltaY * 1.0;
                     
                     this.touchStartX = event.touches[0].clientX;
                     this.touchStartY = event.touches[0].clientY;
@@ -280,7 +404,7 @@
                     const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
                     const scale = currentDistance / this.initialDistance;
                     
-                    this.scale = Math.max(0.1, Math.min(2, this.scale * scale));
+                    this.scale = Math.max(0.1, Math.min(1.5, this.scale * scale));
                     this.initialDistance = currentDistance;
                 }
                 
@@ -344,12 +468,12 @@
 
         // Modellerin boyutunu ve pozisyonunu düzelt
         document.querySelectorAll('.model-entity').forEach(function(entity) {
-            entity.setAttribute('scale', '0.5 0.5 0.5');
+            entity.setAttribute('scale', '0.3 0.3 0.3');
             entity.setAttribute('position', '0 0 0');
         });
 
         document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
-            entity.setAttribute('scale', '0.5 0.5 0.5');
+            entity.setAttribute('scale', '0.3 0.3 0.3');
             entity.setAttribute('position', '0 0 0');
         });
     </script>
