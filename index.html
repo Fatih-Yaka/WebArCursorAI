@@ -353,6 +353,12 @@
                         
                         // Modelin boyutunu sabit tut
                         persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
+                        
+                        // Fred modeli için özel işlem
+                        if (modelName === 'Fred') {
+                            // Kalıcı modeli hemen görünür yap
+                            persistentModel.setAttribute('visible', 'true');
+                        }
                     } else {
                         // İnceleme modunda ise, modeli inceleme için yerleştir
                         placeModelForInspection(modelName);
@@ -373,7 +379,14 @@
                         const persistentModel = document.getElementById(persistentModelId);
                         
                         if (persistentModel) {
-                            persistentModel.setAttribute('visible', 'true');
+                            // Fred modeli için özel işlem
+                            if (modelName === 'Fred') {
+                                // Fred modeli için kalıcı modeli görünür yap
+                                persistentModel.setAttribute('visible', 'true');
+                            } else {
+                                // Diğer modeller için normal davranış
+                                persistentModel.setAttribute('visible', 'true');
+                            }
                         }
                     }
                 });
