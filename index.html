@@ -122,6 +122,9 @@
         <!-- Kamera -->
         <a-entity camera></a-entity>
         
+        <!-- Kalıcı modeller için konteyner -->
+        <a-entity id="persistent-models"></a-entity>
+        
         <!-- Pattern işaretçisi - Meat modeli -->
         <a-marker type="pattern" url="assets/pattern-marker.patt" id="pattern-marker" smooth="true" smoothCount="5" registerevents>
             <a-entity
@@ -133,7 +136,7 @@
                 touch-controls
                 data-model-name="Meat"
                 class="model-entity"
-                visible="true">
+                visible="false">
             </a-entity>
         </a-marker>
     </a-scene>
@@ -141,6 +144,7 @@
     <script>
         // Global değişkenler
         let activeModel = null;
+        let modelPlaced = false; // Model yerleştirildi mi kontrolü
         
         // Model kontrol butonlarını ayarla
         const rotateLeftButton = document.getElementById('rotate-left');
@@ -150,7 +154,7 @@
         
         // Buton olaylarını dinle
         rotateLeftButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
             if (activeEntity) {
                 const currentRotation = activeEntity.getAttribute('rotation');
                 const newRotation = `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`;
@@ -160,7 +164,7 @@
         });
         
         rotateRightButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
             if (activeEntity) {
                 const currentRotation = activeEntity.getAttribute('rotation');
                 const newRotation = `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`;
@@ -170,7 +174,7 @@
         });
         
         scaleUpButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
             if (activeEntity) {
                 const currentScale = activeEntity.getAttribute('scale');
                 const newScale = Math.min(1.0, currentScale.x + 0.1);
@@ -181,7 +185,7 @@
         });
         
         scaleDownButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
             if (activeEntity) {
                 const currentScale = activeEntity.getAttribute('scale');
                 const newScale = Math.max(0.1, currentScale.x - 0.1);
@@ -311,12 +315,13 @@
                 const modelEntity = marker.querySelector('.model-entity');
                 const modelId = modelEntity.id;
                 const modelName = modelEntity.getAttribute('data-model-name');
+                const modelSrc = modelEntity.getAttribute('gltf-model');
                 
                 // Model yüklendiğinde
                 modelEntity.addEventListener('model-loaded', function() {
                     console.log('Model yüklendi:', modelName);
-                    // Modeli görünür yap
-                    modelEntity.setAttribute('visible', 'true');
+                    // Modeli gizli tut
+                    modelEntity.setAttribute('visible', 'false');
                 });
                 
                 // İşaretçi bulunduğunda
@@ -326,21 +331,80 @@
                     // Aktif modeli güncelle
                     activeModel = modelName;
                     
-                    // Modeli görünür yap
-                    modelEntity.setAttribute('visible', 'true');
-                    
                     // Aktif model bilgisini güncelle
                     document.getElementById('marker-message').style.display = 'none';
                     document.getElementById('marker-info').style.display = 'block';
                     document.getElementById('active-model').textContent = modelName;
+                    
+                    // Eğer model daha önce yerleştirilmediyse
+                    if (!modelPlaced) {
+                        // İşaretçinin dünya koordinatlarını al
+                        const markerWorldPosition = new THREE.Vector3();
+                        const markerWorldRotation = new THREE.Quaternion();
+                        
+                        marker.object3D.getWorldPosition(markerWorldPosition);
+                        marker.object3D.getWorldQuaternion(markerWorldRotation);
+                        
+                        // Kalıcı model oluştur
+                        const persistentModelsContainer = document.getElementById('persistent-models');
+                        
+                        const persistentModel = document.createElement('a-entity');
+                        persistentModel.id = `persistent-${modelId}`;
+                        persistentModel.setAttribute('gltf-model', modelSrc);
+                        persistentModel.setAttribute('scale', '0.5 0.5 0.5');
+                        persistentModel.setAttribute('data-model-name', modelName);
+                        persistentModel.setAttribute('touch-controls', '');
+                        persistentModel.setAttribute('visible', 'true');
+                        
+                        // Pozisyon ve rotasyonu ayarla
+                        persistentModel.object3D.position.copy(markerWorldPosition);
+                        persistentModel.object3D.quaternion.copy(markerWorldRotation);
+                        
+                        persistentModelsContainer.appendChild(persistentModel);
+                        
+                        // Model yüklendiğinde
+                        persistentModel.addEventListener('model-loaded', function() {
+                            console.log('Kalıcı model yüklendi:', modelName);
+                            // Modeli görünür yap
+                            persistentModel.setAttribute('visible', 'true');
+                        });
+                        
+                        // Model yerleştirildi olarak işaretle
+                        modelPlaced = true;
+                    } else {
+                        // Kalıcı modeli göster
+                        const persistentModelId = `persistent-${modelId}`;
+                        const persistentModel = document.getElementById(persistentModelId);
+                        
+                        if (persistentModel) {
+                            // İşaretçinin dünya koordinatlarını al
+                            const markerWorldPosition = new THREE.Vector3();
+                            const markerWorldRotation = new THREE.Quaternion();
+                            
+                            marker.object3D.getWorldPosition(markerWorldPosition);
+                            marker.object3D.getWorldQuaternion(markerWorldRotation);
+                            
+                            // Pozisyon ve rotasyonu güncelle
+                            persistentModel.object3D.position.copy(markerWorldPosition);
+                            persistentModel.object3D.quaternion.copy(markerWorldRotation);
+                            
+                            // Kalıcı modeli görünür yap
+                            persistentModel.setAttribute('visible', 'true');
+                        }
+                    }
                 });
                 
                 // İşaretçi kaybolduğunda
                 marker.addEventListener('markerLost', function () {
                     console.log('İşaretçi kayboldu:', marker.id);
                     
-                    // Modeli gizle
-                    modelEntity.setAttribute('visible', 'false');
+                    // Kalıcı modeli gizle
+                    const persistentModelId = `persistent-${modelId}`;
+                    const persistentModel = document.getElementById(persistentModelId);
+                    
+                    if (persistentModel) {
+                        persistentModel.setAttribute('visible', 'false');
+                    }
                 });
             }
         });
@@ -367,7 +431,7 @@
             document.querySelectorAll('.model-entity').forEach(function(entity) {
                 entity.setAttribute('scale', '0.5 0.5 0.5');
                 entity.setAttribute('position', '0 0 0');
-                entity.setAttribute('visible', 'true');
+                entity.setAttribute('visible', 'false');
             });
         });
     </script>
