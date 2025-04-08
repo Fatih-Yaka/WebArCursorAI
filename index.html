@@ -66,15 +66,26 @@
         }
         /* İnceleme modu butonu */
         #inspect-button {
+            display: none;
+        }
+        
+        /* Model kontrol butonları */
+        #model-controls {
             position: fixed;
-            bottom: 80px;
+            bottom: 20px;
             right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        }
+        
+        .control-button {
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px 15px;
             border-radius: 50%;
             font-size: 24px;
-            z-index: 999;
             border: none;
             outline: none;
             cursor: pointer;
@@ -84,7 +95,8 @@
             justify-content: center;
             align-items: center;
         }
-        #inspect-button.active {
+        
+        .control-button:hover {
             background-color: rgba(0, 120, 255, 0.7);
         }
     </style>
@@ -105,7 +117,12 @@
         Aktif model: <span id="active-model">Yok</span>
     </div>
 
-    <button id="inspect-button">🔍</button>
+    <div id="model-controls">
+        <button class="control-button" id="rotate-left">↶</button>
+        <button class="control-button" id="rotate-right">↷</button>
+        <button class="control-button" id="scale-up">+</button>
+        <button class="control-button" id="scale-down">-</button>
+    </div>
 
     <a-scene 
         embedded
@@ -151,7 +168,7 @@
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#fred-model"
-                    touch-controls
+                    model-controls
                     data-model-name="Fred"
                     class="model-entity"
                     visible="false">
@@ -198,100 +215,70 @@
 
     <script>
         // Global değişkenler
-        let inspectMode = false;
         let activeModel = null;
         
-        // İnceleme modu butonunu ayarla
-        const inspectButton = document.getElementById('inspect-button');
-        inspectButton.addEventListener('click', function() {
-            inspectMode = !inspectMode;
-            this.classList.toggle('active');
-            
-            if (inspectMode && activeModel) {
-                // İnceleme modunu aktifleştir
-                placeModelForInspection(activeModel);
-            } else {
-                // İnceleme modunu devre dışı bırak
-                resetModels();
+        // Model kontrol butonlarını ayarla
+        const rotateLeftButton = document.getElementById('rotate-left');
+        const rotateRightButton = document.getElementById('rotate-right');
+        const scaleUpButton = document.getElementById('scale-up');
+        const scaleDownButton = document.getElementById('scale-down');
+        
+        // Buton olaylarını dinle
+        rotateLeftButton.addEventListener('click', function() {
+            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            if (activeEntity) {
+                const currentRotation = activeEntity.getAttribute('rotation');
+                activeEntity.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`);
             }
         });
         
-        // Modeli inceleme için yerleştir
-        function placeModelForInspection(modelName) {
-            // Tüm kalıcı modelleri gizle
-            document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
-                entity.setAttribute('visible', 'false');
-            });
-            
-            // İlgili modeli bul ve ortaya yerleştir
-            const modelId = getModelIdByName(modelName);
-            if (modelId) {
-                const persistentModelId = `persistent-${modelId}`;
-                const persistentModel = document.getElementById(persistentModelId);
-                
-                if (persistentModel) {
-                    // Modeli görünür yap
-                    persistentModel.setAttribute('visible', 'true');
-                    
-                    // Modeli kameranın önüne yerleştir
-                    const camera = document.querySelector('a-entity[camera]');
-                    const cameraPosition = new THREE.Vector3();
-                    const cameraRotation = new THREE.Quaternion();
-                    
-                    camera.object3D.getWorldPosition(cameraPosition);
-                    camera.object3D.getWorldQuaternion(cameraRotation);
-                    
-                    // Kameranın önünde bir pozisyon hesapla
-                    const direction = new THREE.Vector3(0, 0, -1);
-                    direction.applyQuaternion(cameraRotation);
-                    direction.multiplyScalar(1); // Mesafe
-                    
-                    const targetPosition = new THREE.Vector3();
-                    targetPosition.addVectors(cameraPosition, direction);
-                    
-                    // Modeli yerleştir
-                    persistentModel.object3D.position.copy(targetPosition);
-                    persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
-                    
-                    // Modeli kameraya baktır
-                    persistentModel.object3D.lookAt(cameraPosition);
-                    
-                    // Modeli biraz döndür (daha iyi görünüm için)
-                    const currentRotation = persistentModel.getAttribute('rotation');
-                    persistentModel.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 180} ${currentRotation.z}`);
-                    
-                    // Modeli touch-controls ile kontrol edilebilir yap
-                    persistentModel.setAttribute('touch-controls', '');
-                    
-                    console.log('Model inceleme için yerleştirildi:', modelName);
-                    
-                    // Kullanıcıya bilgi ver
-                    document.getElementById('marker-message').style.display = 'none';
-                    document.getElementById('marker-info').style.display = 'block';
-                    document.getElementById('active-model').textContent = `${modelName} (İnceleme Modu)`;
-                }
+        rotateRightButton.addEventListener('click', function() {
+            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            if (activeEntity) {
+                const currentRotation = activeEntity.getAttribute('rotation');
+                activeEntity.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`);
             }
-        }
+        });
         
-        // Model ID'sini isimden bul
-        function getModelIdByName(modelName) {
-            const modelMap = {
-                'Bina': 'bina-entity',
-                'Fred': 'fred-entity',
-                'Building': 'building-entity',
-                'Pattern': 'pattern-entity'
-            };
-            
-            return modelMap[modelName];
-        }
+        scaleUpButton.addEventListener('click', function() {
+            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            if (activeEntity) {
+                const currentScale = activeEntity.getAttribute('scale');
+                const newScale = Math.min(1.0, currentScale.x + 0.1);
+                activeEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+            }
+        });
         
-        // Modelleri sıfırla
-        function resetModels() {
-            document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
-                entity.setAttribute('visible', 'false');
-            });
-        }
-
+        scaleDownButton.addEventListener('click', function() {
+            const activeEntity = document.querySelector('.model-entity[visible="true"]');
+            if (activeEntity) {
+                const currentScale = activeEntity.getAttribute('scale');
+                const newScale = Math.max(0.1, currentScale.x - 0.1);
+                activeEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+            }
+        });
+        
+        // Model kontrol komponenti
+        AFRAME.registerComponent('model-controls', {
+            schema: {
+                enabled: {default: true}
+            },
+            init: function() {
+                // Başlangıç değerlerini al
+                const currentScale = this.el.getAttribute('scale');
+                const currentRotation = this.el.getAttribute('rotation');
+                
+                this.scale = currentScale.x || 0.3;
+                this.rotation = { 
+                    x: currentRotation ? currentRotation.x : 0, 
+                    y: currentRotation ? currentRotation.y : 0, 
+                    z: currentRotation ? currentRotation.z : 0 
+                };
+                
+                console.log('Model controls başlatıldı:', this.el.id);
+            }
+        });
+        
         // İşaretçi olaylarını kaydetmek için komponent
         AFRAME.registerComponent('registerevents', {
             init: function () {
@@ -309,59 +296,53 @@
                     // Aktif modeli güncelle
                     activeModel = modelName;
                     
-                    // İnceleme modunda değilse normal davranış
-                    if (!inspectMode) {
-                        // Modeli görünür yap
-                        modelEntity.setAttribute('visible', 'true');
+                    // Modeli görünür yap
+                    modelEntity.setAttribute('visible', 'true');
+                    
+                    // Aktif model bilgisini güncelle
+                    document.getElementById('marker-message').style.display = 'none';
+                    document.getElementById('marker-info').style.display = 'block';
+                    document.getElementById('active-model').textContent = modelName;
+                    
+                    // Kalıcı model var mı kontrol et
+                    const persistentModelId = `persistent-${modelId}`;
+                    let persistentModel = document.getElementById(persistentModelId);
+                    
+                    if (!persistentModel) {
+                        // Kalıcı model yoksa oluştur
+                        const persistentModelsContainer = document.getElementById('persistent-models');
                         
-                        // Aktif model bilgisini güncelle
-                        document.getElementById('marker-message').style.display = 'none';
-                        document.getElementById('marker-info').style.display = 'block';
-                        document.getElementById('active-model').textContent = modelName;
+                        persistentModel = document.createElement('a-entity');
+                        persistentModel.id = persistentModelId;
+                        persistentModel.setAttribute('gltf-model', modelSrc);
+                        persistentModel.setAttribute('scale', '0.3 0.3 0.3');
+                        persistentModel.setAttribute('data-model-name', modelName);
+                        persistentModel.setAttribute('model-controls', '');
+                        persistentModel.setAttribute('visible', 'false');
                         
-                        // Kalıcı model var mı kontrol et
-                        const persistentModelId = `persistent-${modelId}`;
-                        let persistentModel = document.getElementById(persistentModelId);
-                        
-                        if (!persistentModel) {
-                            // Kalıcı model yoksa oluştur
-                            const persistentModelsContainer = document.getElementById('persistent-models');
-                            
-                            persistentModel = document.createElement('a-entity');
-                            persistentModel.id = persistentModelId;
-                            persistentModel.setAttribute('gltf-model', modelSrc);
-                            persistentModel.setAttribute('scale', '0.3 0.3 0.3');
-                            persistentModel.setAttribute('data-model-name', modelName);
-                            persistentModel.setAttribute('touch-controls', '');
-                            persistentModel.setAttribute('visible', 'false');
-                            
-                            persistentModelsContainer.appendChild(persistentModel);
-                        }
-                        
-                        // İşaretçinin dünya koordinatlarını al
-                        const markerWorldPosition = new THREE.Vector3();
-                        const markerWorldRotation = new THREE.Quaternion();
-                        const markerWorldScale = new THREE.Vector3();
-                        
-                        marker.object3D.getWorldPosition(markerWorldPosition);
-                        marker.object3D.getWorldQuaternion(markerWorldRotation);
-                        marker.object3D.getWorldScale(markerWorldScale);
-                        
-                        // Kalıcı modelin pozisyonunu ve rotasyonunu güncelle
-                        persistentModel.object3D.position.copy(markerWorldPosition);
-                        persistentModel.object3D.quaternion.copy(markerWorldRotation);
-                        
-                        // Modelin boyutunu sabit tut
-                        persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
-                        
-                        // Fred modeli için özel işlem
-                        if (modelName === 'Fred') {
-                            // Kalıcı modeli hemen görünür yap
-                            persistentModel.setAttribute('visible', 'true');
-                        }
-                    } else {
-                        // İnceleme modunda ise, modeli inceleme için yerleştir
-                        placeModelForInspection(modelName);
+                        persistentModelsContainer.appendChild(persistentModel);
+                    }
+                    
+                    // İşaretçinin dünya koordinatlarını al
+                    const markerWorldPosition = new THREE.Vector3();
+                    const markerWorldRotation = new THREE.Quaternion();
+                    const markerWorldScale = new THREE.Vector3();
+                    
+                    marker.object3D.getWorldPosition(markerWorldPosition);
+                    marker.object3D.getWorldQuaternion(markerWorldRotation);
+                    marker.object3D.getWorldScale(markerWorldScale);
+                    
+                    // Kalıcı modelin pozisyonunu ve rotasyonunu güncelle
+                    persistentModel.object3D.position.copy(markerWorldPosition);
+                    persistentModel.object3D.quaternion.copy(markerWorldRotation);
+                    
+                    // Modelin boyutunu sabit tut
+                    persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
+                    
+                    // Fred modeli için özel işlem
+                    if (modelName === 'Fred') {
+                        // Kalıcı modeli hemen görünür yap
+                        persistentModel.setAttribute('visible', 'true');
                     }
                 });
                 
@@ -369,140 +350,24 @@
                 marker.addEventListener('markerLost', function () {
                     console.log('İşaretçi kayboldu:', marker.id);
                     
-                    // İnceleme modunda değilse normal davranış
-                    if (!inspectMode) {
-                        // Orijinal modeli gizle
-                        modelEntity.setAttribute('visible', 'false');
-                        
-                        // Kalıcı modeli göster
-                        const persistentModelId = `persistent-${modelId}`;
-                        const persistentModel = document.getElementById(persistentModelId);
-                        
-                        if (persistentModel) {
-                            // Fred modeli için özel işlem
-                            if (modelName === 'Fred') {
-                                // Fred modeli için kalıcı modeli görünür yap
-                                persistentModel.setAttribute('visible', 'true');
-                            } else {
-                                // Diğer modeller için normal davranış
-                                persistentModel.setAttribute('visible', 'true');
-                            }
+                    // Orijinal modeli gizle
+                    modelEntity.setAttribute('visible', 'false');
+                    
+                    // Kalıcı modeli göster
+                    const persistentModelId = `persistent-${modelId}`;
+                    const persistentModel = document.getElementById(persistentModelId);
+                    
+                    if (persistentModel) {
+                        // Fred modeli için özel işlem
+                        if (modelName === 'Fred') {
+                            // Fred modeli için kalıcı modeli görünür yap
+                            persistentModel.setAttribute('visible', 'true');
+                        } else {
+                            // Diğer modeller için normal davranış
+                            persistentModel.setAttribute('visible', 'true');
                         }
                     }
                 });
-            }
-        });
-
-        // Parmak kontrolleri için komponent
-        AFRAME.registerComponent('touch-controls', {
-            schema: {
-                enabled: {default: true}
-            },
-            init: function() {
-                if (!this.el.getAttribute('touch-controls-registered')) {
-                    // Başlangıç değerlerini al
-                    const currentScale = this.el.getAttribute('scale');
-                    const currentRotation = this.el.getAttribute('rotation');
-                    
-                    this.scale = currentScale.x || 0.3;
-                    this.rotation = { 
-                        x: currentRotation ? currentRotation.x : 0, 
-                        y: currentRotation ? currentRotation.y : 0, 
-                        z: currentRotation ? currentRotation.z : 0 
-                    };
-                    
-                    // Referansı sakla
-                    this.entityEl = this.el;
-                    
-                    // Touch olaylarını dinle
-                    this.onTouchStartBound = this.onTouchStart.bind(this);
-                    this.onTouchMoveBound = this.onTouchMove.bind(this);
-                    this.onTouchEndBound = this.onTouchEnd.bind(this);
-                    
-                    document.addEventListener('touchstart', this.onTouchStartBound);
-                    document.addEventListener('touchmove', this.onTouchMoveBound);
-                    document.addEventListener('touchend', this.onTouchEndBound);
-                    
-                    this.el.setAttribute('touch-controls-registered', 'true');
-                    
-                    console.log('Touch controls başlatıldı:', this.el.id);
-                }
-            },
-            
-            remove: function() {
-                // Bileşen kaldırıldığında olay dinleyicilerini temizle
-                document.removeEventListener('touchstart', this.onTouchStartBound);
-                document.removeEventListener('touchmove', this.onTouchMoveBound);
-                document.removeEventListener('touchend', this.onTouchEndBound);
-                console.log('Touch controls kaldırıldı:', this.el.id);
-            },
-            
-            onTouchStart: function(event) {
-                // Sadece inceleme modunda veya model görünürse işlem yap
-                if (!this.el.getAttribute('visible') && !inspectMode) return;
-                
-                this.touchStartX = event.touches[0].clientX;
-                this.touchStartY = event.touches[0].clientY;
-                this.isTouching = true;
-                
-                // İki parmak varsa başlangıç mesafesini kaydet
-                if (event.touches.length === 2) {
-                    this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
-                    console.log('İki parmak başlangıç mesafesi:', this.initialDistance);
-                }
-            },
-            
-            onTouchMove: function(event) {
-                // Sadece inceleme modunda veya model görünürse işlem yap
-                if (!this.el.getAttribute('visible') && !inspectMode) return;
-                if (!this.isTouching) return;
-                
-                event.preventDefault();
-                
-                // Tek parmak ile döndürme
-                if (event.touches.length === 1) {
-                    const deltaX = event.touches[0].clientX - this.touchStartX;
-                    
-                    // Sadece Y ekseni etrafında döndürme (sağ-sol)
-                    this.rotation.y += deltaX * 2.0;
-                    
-                    this.touchStartX = event.touches[0].clientX;
-                    this.touchStartY = event.touches[0].clientY;
-                    
-                    console.log('Döndürme:', this.rotation);
-                }
-                // İki parmak ile boyutlandırma
-                else if (event.touches.length === 2) {
-                    const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
-                    const scaleFactor = currentDistance / this.initialDistance;
-                    
-                    // Boyutu güncelle (0.1 ile 1.0 arasında sınırla)
-                    const newScale = this.scale * scaleFactor;
-                    this.scale = Math.max(0.1, Math.min(1.0, newScale));
-                    
-                    this.initialDistance = currentDistance;
-                    
-                    console.log('Boyutlandırma:', this.scale);
-                }
-                
-                // Değişiklikleri uygula
-                this.updateTransform();
-            },
-            
-            onTouchEnd: function() {
-                this.isTouching = false;
-            },
-            
-            getDistance: function(touch1, touch2) {
-                const dx = touch1.clientX - touch2.clientX;
-                const dy = touch1.clientY - touch2.clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            },
-            
-            updateTransform: function() {
-                // Rotasyon ve ölçeği güncelle
-                this.el.setAttribute('rotation', `${this.rotation.x} ${this.rotation.y} ${this.rotation.z}`);
-                this.el.setAttribute('scale', `${this.scale} ${this.scale} ${this.scale}`);
             }
         });
 
