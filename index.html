@@ -228,14 +228,17 @@
             const activeEntity = document.querySelector('.model-entity[visible="true"]');
             if (activeEntity) {
                 const currentRotation = activeEntity.getAttribute('rotation');
-                activeEntity.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`);
+                const newRotation = `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`;
+                activeEntity.setAttribute('rotation', newRotation);
                 
                 // Kalıcı modeli de güncelle
                 const persistentModelId = `persistent-${activeEntity.id}`;
                 const persistentModel = document.getElementById(persistentModelId);
                 if (persistentModel) {
-                    persistentModel.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`);
+                    persistentModel.setAttribute('rotation', newRotation);
                 }
+                
+                console.log('Model sola döndürüldü:', newRotation);
             }
         });
         
@@ -243,14 +246,17 @@
             const activeEntity = document.querySelector('.model-entity[visible="true"]');
             if (activeEntity) {
                 const currentRotation = activeEntity.getAttribute('rotation');
-                activeEntity.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`);
+                const newRotation = `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`;
+                activeEntity.setAttribute('rotation', newRotation);
                 
                 // Kalıcı modeli de güncelle
                 const persistentModelId = `persistent-${activeEntity.id}`;
                 const persistentModel = document.getElementById(persistentModelId);
                 if (persistentModel) {
-                    persistentModel.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`);
+                    persistentModel.setAttribute('rotation', newRotation);
                 }
+                
+                console.log('Model sağa döndürüldü:', newRotation);
             }
         });
         
@@ -259,14 +265,17 @@
             if (activeEntity) {
                 const currentScale = activeEntity.getAttribute('scale');
                 const newScale = Math.min(1.0, currentScale.x + 0.1);
-                activeEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                const newScaleStr = `${newScale} ${newScale} ${newScale}`;
+                activeEntity.setAttribute('scale', newScaleStr);
                 
                 // Kalıcı modeli de güncelle
                 const persistentModelId = `persistent-${activeEntity.id}`;
                 const persistentModel = document.getElementById(persistentModelId);
                 if (persistentModel) {
-                    persistentModel.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                    persistentModel.setAttribute('scale', newScaleStr);
                 }
+                
+                console.log('Model büyütüldü:', newScale);
             }
         });
         
@@ -275,14 +284,17 @@
             if (activeEntity) {
                 const currentScale = activeEntity.getAttribute('scale');
                 const newScale = Math.max(0.1, currentScale.x - 0.1);
-                activeEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                const newScaleStr = `${newScale} ${newScale} ${newScale}`;
+                activeEntity.setAttribute('scale', newScaleStr);
                 
                 // Kalıcı modeli de güncelle
                 const persistentModelId = `persistent-${activeEntity.id}`;
                 const persistentModel = document.getElementById(persistentModelId);
                 if (persistentModel) {
-                    persistentModel.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                    persistentModel.setAttribute('scale', newScaleStr);
                 }
+                
+                console.log('Model küçültüldü:', newScale);
             }
         });
         
@@ -367,8 +379,8 @@
                     // Modelin boyutunu sabit tut
                     persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
                     
-                    // Fred modeli için özel işlem
-                    if (modelName === 'Fred') {
+                    // Fred ve Pattern modelleri için özel işlem
+                    if (modelName === 'Fred' || modelName === 'Pattern') {
                         // Kalıcı modeli hemen görünür yap
                         persistentModel.setAttribute('visible', 'true');
                     }
@@ -386,9 +398,9 @@
                     const persistentModel = document.getElementById(persistentModelId);
                     
                     if (persistentModel) {
-                        // Fred modeli için özel işlem
-                        if (modelName === 'Fred') {
-                            // Fred modeli için kalıcı modeli görünür yap
+                        // Fred ve Pattern modelleri için özel işlem
+                        if (modelName === 'Fred' || modelName === 'Pattern') {
+                            // Kalıcı modeli görünür yap
                             persistentModel.setAttribute('visible', 'true');
                         } else {
                             // Diğer modeller için normal davranış
