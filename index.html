@@ -136,7 +136,7 @@
             <a-asset-item id="bina-model" src="assets/bina.glb" crossorigin="anonymous"></a-asset-item>
             <a-asset-item id="fred-model" src="assets/fred.glb" crossorigin="anonymous"></a-asset-item>
             <a-asset-item id="building-model" src="assets/buildingmodel2.glb" crossorigin="anonymous"></a-asset-item>
-            <a-asset-item id="pattern-model" src="assets/bina2.glb" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="pattern-model" src="assets/meat.glb" crossorigin="anonymous"></a-asset-item>
             
             <!-- İşaretçi Görselleri -->
             <img id="hiro-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
@@ -196,12 +196,12 @@
                     id="pattern-entity"
                     position="0 0 0"
                     rotation="0 0 0"
-                    scale="0.3 0.3 0.3"
+                    scale="0.5 0.5 0.5"
                     gltf-model="#pattern-model"
                     model-controls
                     data-model-name="Pattern"
                     class="model-entity"
-                    visible="false">
+                    visible="true">
                 </a-entity>
             </a-marker>
         </a-entity>
@@ -329,6 +329,13 @@
                 const modelScale = modelEntity.getAttribute('scale');
                 const modelSrc = modelEntity.getAttribute('gltf-model');
                 
+                // Model yüklendiğinde
+                modelEntity.addEventListener('model-loaded', function() {
+                    console.log('Model yüklendi:', modelName);
+                    // Modeli görünür yap
+                    modelEntity.setAttribute('visible', 'true');
+                });
+                
                 // İşaretçi bulunduğunda
                 marker.addEventListener('markerFound', function () {
                     console.log('İşaretçi bulundu:', marker.id, 'Model:', modelName);
@@ -355,12 +362,19 @@
                         persistentModel = document.createElement('a-entity');
                         persistentModel.id = persistentModelId;
                         persistentModel.setAttribute('gltf-model', modelSrc);
-                        persistentModel.setAttribute('scale', '0.3 0.3 0.3');
+                        persistentModel.setAttribute('scale', '0.5 0.5 0.5');
                         persistentModel.setAttribute('data-model-name', modelName);
                         persistentModel.setAttribute('model-controls', '');
-                        persistentModel.setAttribute('visible', 'false');
+                        persistentModel.setAttribute('visible', 'true');
                         
                         persistentModelsContainer.appendChild(persistentModel);
+                        
+                        // Model yüklendiğinde
+                        persistentModel.addEventListener('model-loaded', function() {
+                            console.log('Kalıcı model yüklendi:', modelName);
+                            // Modeli görünür yap
+                            persistentModel.setAttribute('visible', 'true');
+                        });
                     }
                     
                     // İşaretçinin dünya koordinatlarını al
@@ -377,7 +391,7 @@
                     persistentModel.object3D.quaternion.copy(markerWorldRotation);
                     
                     // Modelin boyutunu sabit tut
-                    persistentModel.object3D.scale.set(0.3, 0.3, 0.3);
+                    persistentModel.object3D.scale.set(0.5, 0.5, 0.5);
                     
                     // Fred ve Pattern modelleri için özel işlem
                     if (modelName === 'Fred' || modelName === 'Pattern') {
@@ -451,13 +465,15 @@
 
         // Modellerin boyutunu ve pozisyonunu düzelt
         document.querySelectorAll('.model-entity').forEach(function(entity) {
-            entity.setAttribute('scale', '0.3 0.3 0.3');
+            entity.setAttribute('scale', '0.5 0.5 0.5');
             entity.setAttribute('position', '0 0 0');
+            entity.setAttribute('visible', 'true');
         });
 
         document.querySelectorAll('#persistent-models a-entity').forEach(function(entity) {
-            entity.setAttribute('scale', '0.3 0.3 0.3');
+            entity.setAttribute('scale', '0.5 0.5 0.5');
             entity.setAttribute('position', '0 0 0');
+            entity.setAttribute('visible', 'true');
         });
     </script>
 </body>
