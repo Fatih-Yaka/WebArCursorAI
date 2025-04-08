@@ -119,6 +119,7 @@
             <a-asset-item id="bina-model" src="assets/bina.glb" crossorigin="anonymous"></a-asset-item>
             <a-asset-item id="fred-model" src="assets/fred.glb" crossorigin="anonymous"></a-asset-item>
             <a-asset-item id="building-model" src="assets/buildingmodel2.glb" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="pattern-model" src="assets/bina2.glb" crossorigin="anonymous"></a-asset-item>
             
             <!-- İşaretçi Görselleri -->
             <img id="hiro-marker-img" src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO Marker">
@@ -131,7 +132,7 @@
             <a-marker preset="hiro" id="hiro-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="bina-entity"
-                    position="0 0 0"
+                    position="0 0.1 0"
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#bina-model"
@@ -146,7 +147,7 @@
             <a-marker type="pattern" url="assets/fred.patt" id="fred-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="fred-entity"
-                    position="0 0 0"
+                    position="0 0.1 0"
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#fred-model"
@@ -161,12 +162,27 @@
             <a-marker type="pattern" url="assets/buildmodel2.patt" id="building-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="building-entity"
-                    position="0 0 0"
+                    position="0 0.1 0"
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#building-model"
                     touch-controls
                     data-model-name="Building"
+                    class="model-entity"
+                    visible="false">
+                </a-entity>
+            </a-marker>
+            
+            <!-- Pattern işaretçisi - Pattern modeli -->
+            <a-marker type="pattern" url="assets/pattern-marker.patt" id="pattern-marker" smooth="true" smoothCount="5" registerevents>
+                <a-entity
+                    id="pattern-entity"
+                    position="0 0.1 0"
+                    rotation="0 0 0"
+                    scale="0.3 0.3 0.3"
+                    gltf-model="#pattern-model"
+                    touch-controls
+                    data-model-name="Pattern"
                     class="model-entity"
                     visible="false">
                 </a-entity>
@@ -262,7 +278,8 @@
             const modelMap = {
                 'Bina': 'bina-entity',
                 'Fred': 'fred-entity',
-                'Building': 'building-entity'
+                'Building': 'building-entity',
+                'Pattern': 'pattern-entity'
             };
             
             return modelMap[modelName];
@@ -432,13 +449,9 @@
                 // Tek parmak ile döndürme
                 if (event.touches.length === 1) {
                     const deltaX = event.touches[0].clientX - this.touchStartX;
-                    const deltaY = event.touches[0].clientY - this.touchStartY;
                     
-                    // Y ekseni etrafında döndürme (sağ-sol)
-                    this.rotation.y += deltaX * 1.0;
-                    
-                    // X ekseni etrafında döndürme (yukarı-aşağı)
-                    this.rotation.x += deltaY * 1.0;
+                    // Sadece Y ekseni etrafında döndürme (sağ-sol)
+                    this.rotation.y += deltaX * 2.0;
                     
                     this.touchStartX = event.touches[0].clientX;
                     this.touchStartY = event.touches[0].clientY;
@@ -450,9 +463,9 @@
                     const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
                     const scaleFactor = currentDistance / this.initialDistance;
                     
-                    // Boyutu güncelle (0.1 ile 1.5 arasında sınırla)
+                    // Boyutu güncelle (0.1 ile 1.0 arasında sınırla)
                     const newScale = this.scale * scaleFactor;
-                    this.scale = Math.max(0.1, Math.min(1.5, newScale));
+                    this.scale = Math.max(0.1, Math.min(1.0, newScale));
                     
                     this.initialDistance = currentDistance;
                     
