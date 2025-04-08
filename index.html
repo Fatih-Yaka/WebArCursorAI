@@ -149,11 +149,11 @@
             <a-marker preset="hiro" id="hiro-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="bina-entity"
-                    position="0 0.1 0"
+                    position="0 0 0"
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#bina-model"
-                    touch-controls
+                    model-controls
                     data-model-name="Bina"
                     class="model-entity"
                     visible="false">
@@ -179,11 +179,11 @@
             <a-marker type="pattern" url="assets/buildmodel2.patt" id="building-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="building-entity"
-                    position="0 0.1 0"
+                    position="0 0 0"
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#building-model"
-                    touch-controls
+                    model-controls
                     data-model-name="Building"
                     class="model-entity"
                     visible="false">
@@ -194,11 +194,11 @@
             <a-marker type="pattern" url="assets/pattern-marker.patt" id="pattern-marker" smooth="true" smoothCount="5" registerevents>
                 <a-entity
                     id="pattern-entity"
-                    position="0 0.1 0"
+                    position="0 0 0"
                     rotation="0 0 0"
                     scale="0.3 0.3 0.3"
                     gltf-model="#pattern-model"
-                    touch-controls
+                    model-controls
                     data-model-name="Pattern"
                     class="model-entity"
                     visible="false">
@@ -229,6 +229,13 @@
             if (activeEntity) {
                 const currentRotation = activeEntity.getAttribute('rotation');
                 activeEntity.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`);
+                
+                // Kalıcı modeli de güncelle
+                const persistentModelId = `persistent-${activeEntity.id}`;
+                const persistentModel = document.getElementById(persistentModelId);
+                if (persistentModel) {
+                    persistentModel.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`);
+                }
             }
         });
         
@@ -237,6 +244,13 @@
             if (activeEntity) {
                 const currentRotation = activeEntity.getAttribute('rotation');
                 activeEntity.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`);
+                
+                // Kalıcı modeli de güncelle
+                const persistentModelId = `persistent-${activeEntity.id}`;
+                const persistentModel = document.getElementById(persistentModelId);
+                if (persistentModel) {
+                    persistentModel.setAttribute('rotation', `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`);
+                }
             }
         });
         
@@ -246,6 +260,13 @@
                 const currentScale = activeEntity.getAttribute('scale');
                 const newScale = Math.min(1.0, currentScale.x + 0.1);
                 activeEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                
+                // Kalıcı modeli de güncelle
+                const persistentModelId = `persistent-${activeEntity.id}`;
+                const persistentModel = document.getElementById(persistentModelId);
+                if (persistentModel) {
+                    persistentModel.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                }
             }
         });
         
@@ -255,6 +276,13 @@
                 const currentScale = activeEntity.getAttribute('scale');
                 const newScale = Math.max(0.1, currentScale.x - 0.1);
                 activeEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                
+                // Kalıcı modeli de güncelle
+                const persistentModelId = `persistent-${activeEntity.id}`;
+                const persistentModel = document.getElementById(persistentModelId);
+                if (persistentModel) {
+                    persistentModel.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+                }
             }
         });
         
