@@ -82,6 +82,51 @@
         .control-button:hover {
             background-color: rgba(0, 120, 255, 0.7);
         }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+        #loading-screen.hidden {
+            display: none;
+        }
+        #loading-screen h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #loading-screen p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        #loading-screen .progress {
+            width: 200px;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #loading-screen .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -141,59 +186,18 @@
         </a-marker>
     </a-scene>
 
+    <div id="loading-screen" class="hidden">
+        <h1>Model Yükleniyor</h1>
+        <p>Lütfen bekleyin...</p>
+        <div class="progress">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
     <script>
         // Global değişkenler
         let activeModel = null;
         let modelPlaced = false; // Model yerleştirildi mi kontrolü
-        
-        // Model kontrol butonlarını ayarla
-        const rotateLeftButton = document.getElementById('rotate-left');
-        const rotateRightButton = document.getElementById('rotate-right');
-        const scaleUpButton = document.getElementById('scale-up');
-        const scaleDownButton = document.getElementById('scale-down');
-        
-        // Buton olaylarını dinle
-        rotateLeftButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
-            if (activeEntity) {
-                const currentRotation = activeEntity.getAttribute('rotation');
-                const newRotation = `${currentRotation.x} ${currentRotation.y - 15} ${currentRotation.z}`;
-                activeEntity.setAttribute('rotation', newRotation);
-                console.log('Model sola döndürüldü:', newRotation);
-            }
-        });
-        
-        rotateRightButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
-            if (activeEntity) {
-                const currentRotation = activeEntity.getAttribute('rotation');
-                const newRotation = `${currentRotation.x} ${currentRotation.y + 15} ${currentRotation.z}`;
-                activeEntity.setAttribute('rotation', newRotation);
-                console.log('Model sağa döndürüldü:', newRotation);
-            }
-        });
-        
-        scaleUpButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
-            if (activeEntity) {
-                const currentScale = activeEntity.getAttribute('scale');
-                const newScale = Math.min(1.0, currentScale.x + 0.1);
-                const newScaleStr = `${newScale} ${newScale} ${newScale}`;
-                activeEntity.setAttribute('scale', newScaleStr);
-                console.log('Model büyütüldü:', newScale);
-            }
-        });
-        
-        scaleDownButton.addEventListener('click', function() {
-            const activeEntity = document.querySelector('#persistent-models a-entity[visible="true"]');
-            if (activeEntity) {
-                const currentScale = activeEntity.getAttribute('scale');
-                const newScale = Math.max(0.1, currentScale.x - 0.1);
-                const newScaleStr = `${newScale} ${newScale} ${newScale}`;
-                activeEntity.setAttribute('scale', newScaleStr);
-                console.log('Model küçültüldü:', newScale);
-            }
-        });
         
         // Parmak kontrolleri için komponent
         AFRAME.registerComponent('touch-controls', {
