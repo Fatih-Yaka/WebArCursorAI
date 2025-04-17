@@ -116,7 +116,7 @@
         <!-- Asset Management System -->
         <a-assets>
             <!-- Modeller -->
-            <a-asset-item id="meat-model" src="assets/meat.glb" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="pizza-model" src="assets/pizza.glb" crossorigin="anonymous"></a-asset-item>
         </a-assets>
         
         <!-- Kamera -->
@@ -125,16 +125,16 @@
         <!-- Kalıcı modeller için konteyner -->
         <a-entity id="persistent-models"></a-entity>
         
-        <!-- Pattern işaretçisi - Meat modeli -->
+        <!-- Pattern işaretçisi - Pizza modeli -->
         <a-marker type="pattern" url="assets/pattern-marker.patt" id="pattern-marker" smooth="true" smoothCount="5" registerevents>
             <a-entity
-                id="meat-entity"
+                id="pizza-entity"
                 position="0 0 0"
                 rotation="0 0 0"
                 scale="0.5 0.5 0.5"
-                gltf-model="#meat-model"
+                gltf-model="#pizza-model"
                 touch-controls
-                data-model-name="Meat"
+                data-model-name="Pizza"
                 class="model-entity"
                 visible="false">
             </a-entity>
